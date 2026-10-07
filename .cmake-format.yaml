@@ -1,0 +1,9 @@
+line_width: 100
+tab_size: 4
+use_tabchars: false
+separate_ctrl_name_with_space: false
+separate_fn_name_with_space: false
+dangle_parens: false
+command_case: lower
+keyword_case: lower
+always_wrap: []
