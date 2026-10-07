@@ -7,6 +7,7 @@ project(im_cpp
 )
 
 option(IM_CPP_ENABLE_CLANG_TIDY "Run clang-tidy during compilation when available" OFF)
+option(IM_CPP_BUILD_TESTS "Build and register unit tests" ON)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -29,7 +30,29 @@ set_target_properties(im-cpp PROPERTIES
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS OFF
 )
+target_include_directories(im-cpp PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
 target_link_libraries(im-cpp PRIVATE im_cpp_options)
+
+if(IM_CPP_BUILD_TESTS)
+    include(CTest)
+    include(FetchContent)
+
+    FetchContent_Declare(
+        Catch2
+        GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+        GIT_TAG v3.8.1
+        GIT_SHALLOW TRUE
+    )
+    FetchContent_MakeAvailable(Catch2)
+
+    add_executable(im_cpp_tests tests/application_info_tests.cpp)
+    target_include_directories(im_cpp_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
+    target_link_libraries(im_cpp_tests PRIVATE Catch2::Catch2WithMain im_cpp_options)
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang")
+        target_compile_options(im_cpp_tests PRIVATE -Wno-c2y-extensions)
+    endif()
+    add_test(NAME im_cpp_tests COMMAND im_cpp_tests)
+endif()
 
 if(IM_CPP_ENABLE_CLANG_TIDY)
     find_program(IM_CPP_CLANG_TIDY_EXECUTABLE NAMES clang-tidy REQUIRED)

@@ -3,7 +3,8 @@ Checks: >
   bugprone-*,
   performance-*,
   portability-*,
-  readability-*
-WarningsAsErrors: ''
+  readability-*,
+  -bugprone-throwing-static-initialization
+WarningsAsErrors: '*'
 HeaderFilterRegex: '^(src|tests)/'
 FormatStyle: file
