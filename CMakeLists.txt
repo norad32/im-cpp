@@ -23,7 +23,7 @@ set_target_properties(im_cpp_options PROPERTIES
     CXX_EXTENSIONS OFF
 )
 
-im_cpp_configure_compiler_settings(im_cpp_options)
+apply_common_compile_options(im_cpp_options)
 
 find_package(spdlog CONFIG QUIET)
 if(NOT spdlog_FOUND)
@@ -49,7 +49,9 @@ if(NOT CLI11_FOUND)
         GIT_TAG v2.4.2
         GIT_SHALLOW TRUE
     )
+    set(CMAKE_POLICY_VERSION_MINIMUM 3.10)
     FetchContent_MakeAvailable(CLI11)
+    unset(CMAKE_POLICY_VERSION_MINIMUM)
 endif()
 
 add_library(im_core
@@ -115,6 +117,8 @@ if(IM_CPP_BUILD_TESTS)
     if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang")
         target_compile_options(im_cpp_tests PRIVATE -Wno-c2y-extensions)
     endif()
+    apply_unit_test_compile_options(im_cpp_tests)
+    apply_unit_test_link_options(im_cpp_tests)
     add_test(NAME im_cpp_tests COMMAND im_cpp_tests)
 endif()
 
