@@ -32,15 +32,6 @@
             },
             "group": "build",
             "problemMatcher": ["$gcc"]
-        },
-        {
-            "label": "Run tests under Valgrind",
-            "type": "shell",
-            "command": "cmake --preset debug && cmake --build --preset debug && valgrind --leak-check=full --show-leak-kinds=all --errors-for-leak-kinds=definite,indirect --error-exitcode=1 ./build/debug/im_cpp_tests",
-            "options": {
-                "cwd": "${workspaceFolder}"
-            },
-            "problemMatcher": ["$gcc"]
         }
     ]
 }

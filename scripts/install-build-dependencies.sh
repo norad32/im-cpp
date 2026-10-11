@@ -1,9 +1,4 @@
 #!/usr/bin/env bash
-"""Install missing C++ build, GUI, and formatting dependencies on apt/pacman Linux.
-
-Installs compiler, CMake, Ninja, clang-tidy, clang-format, GLFW/OpenGL development
-packages, and cmake-format via pipx when needed. Requires sudo/root for system packages.
-"""
 set -euo pipefail
 
 if (( EUID == 0 )); then
@@ -24,7 +19,7 @@ install_apt() {
         ninja-build
         clang-tidy
         clang-format
-        valgrind
+        gcovr
         libglfw3-dev
         libgl1-mesa-dev
         pkg-config
@@ -55,9 +50,9 @@ install_pacman() {
         base-devel
         cmake
         ninja
-        clang
+        gcc
         clang-tools-extra
-        valgrind
+        gcovr
         glfw-x11
         mesa
         pkgconf
@@ -94,8 +89,12 @@ if ! command -v cmake-format >/dev/null 2>&1; then
     if ! pipx list --short 2>/dev/null | awk '$1 == "cmakelang" { found = 1 } END { exit !found }'; then
         pipx install cmakelang
     fi
+    if ! pipx runpip cmakelang show pyyaml >/dev/null 2>&1; then
+        pipx inject cmakelang pyyaml
+    fi
 
     PIPX_BIN_DIR="$(pipx environment --value PIPX_BIN_DIR)"
+
     if [[ -x "${PIPX_BIN_DIR}/cmake-format" ]]; then
         CMAKE_FORMAT_BIN="${PIPX_BIN_DIR}/cmake-format"
         if [[ ":${PATH}:" != *":${PIPX_BIN_DIR}:"* ]]; then
@@ -105,14 +104,14 @@ if ! command -v cmake-format >/dev/null 2>&1; then
     fi
 fi
 
-for tool in g++ cmake ninja clang-tidy clang-format; do
+for tool in g++ cmake ninja; do
     if ! command -v "$tool" >/dev/null 2>&1; then
         printf 'Dependency installation completed, but %s is still not on PATH.\n' "$tool" >&2
         exit 1
     fi
 done
 
-for tool in g++ cmake ninja clang-tidy clang-format cmake-format valgrind; do
+for tool in g++ cmake ninja clang-tidy clang-format cmake-format gcovr; do
     if ! command -v "$tool" >/dev/null 2>&1; then
         printf 'Dependency installation completed, but %s is still not on PATH.\n' "$tool" >&2
         exit 1
