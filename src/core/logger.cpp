@@ -1,0 +1,131 @@
+#include "core/logger.h"
+#include <cstdlib>
+#include <filesystem>
+#include <memory>
+#include <stdexcept>
+#include <string_view>
+#include <vector>
+#include <spdlog/common.h>
+#include <spdlog/logger.h>
+#include <spdlog/sinks/rotating_file_sink.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include "core/gui_log_sink.h"
+#include "core/log_level.h"
+
+namespace im_cpp::core
+{
+namespace
+{
+
+constexpr std::size_t maxLogFileSize = std::size_t{1024} * std::size_t{1024};
+constexpr std::size_t maxRotatedLogFiles = std::size_t{3};
+
+[[nodiscard]] spdlog::level::level_enum toSpdlogLevel(LogLevel level) noexcept
+{
+    switch (level)
+    {
+        case LogLevel::notSet :
+            return spdlog::level::trace;
+        case LogLevel::debug :
+            return spdlog::level::debug;
+        case LogLevel::info :
+            return spdlog::level::info;
+        case LogLevel::warning :
+            return spdlog::level::warn;
+        case LogLevel::error :
+            return spdlog::level::err;
+        case LogLevel::critical :
+            return spdlog::level::critical;
+    }
+    return spdlog::level::off;
+}
+
+[[nodiscard]] std::filesystem::path defaultLogDirectory()
+{
+    if (const char * stateDirectory = std::getenv("XDG_STATE_HOME");
+        stateDirectory != nullptr && !std::string_view(stateDirectory).empty())
+    {
+        return std::filesystem::path(stateDirectory) / "im-cpp" / "logs";
+    }
+    if (const char * homeDirectory = std::getenv("HOME"); homeDirectory != nullptr && !std::string_view(homeDirectory).empty())
+    {
+        return std::filesystem::path(homeDirectory) / ".local" / "state" / "im-cpp" / "logs";
+    }
+    throw std::runtime_error("Cannot determine log directory: XDG_STATE_HOME and HOME are unset");
+}
+
+} // namespace
+
+Logger::Logger(std::string_view name) : name_(name)
+{
+}
+
+void Logger::setup(LogLevel level, const std::filesystem::path & logDirectory)
+{
+    shutdown();
+    const auto directory = logDirectory.empty() ? defaultLogDirectory() : logDirectory;
+    std::filesystem::create_directories(directory);
+    logFilePath_ = directory / (name_ + ".log");
+
+    std::vector<spdlog::sink_ptr> sinks;
+    sinks.push_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
+    sinks.push_back(
+        std::make_shared<spdlog::sinks::rotating_file_sink_mt>(logFilePath_.string(), maxLogFileSize, maxRotatedLogFiles));
+    if (guiSink_)
+    {
+        sinks.push_back(guiSink_);
+    }
+
+    logger_ = std::make_shared<spdlog::logger>(name_, sinks.begin(), sinks.end());
+    logger_->set_level(toSpdlogLevel(level));
+    logger_->set_pattern("%Y-%m-%d %H:%M:%S.%e [%l] [%n] %v");
+    logger_->flush_on(spdlog::level::err);
+}
+
+Logger::~Logger()
+{
+    shutdown();
+}
+
+void Logger::shutdown() noexcept
+{
+    if (logger_)
+    {
+        logger_->flush();
+        logger_.reset();
+    }
+}
+
+void Logger::setLevel(LogLevel level) noexcept
+{
+    if (logger_)
+    {
+        logger_->set_level(toSpdlogLevel(level));
+    }
+}
+
+std::shared_ptr<GuiLogSink> Logger::attachGuiSink()
+{
+    if (!logger_)
+    {
+        throw std::logic_error("Logger must be set up before attaching a GUI sink");
+    }
+    if (!guiSink_)
+    {
+        guiSink_ = std::make_shared<GuiLogSink>();
+        logger_->sinks().push_back(guiSink_);
+    }
+    return guiSink_;
+}
+
+const std::filesystem::path & Logger::logFilePath() const noexcept
+{
+    return logFilePath_;
+}
+
+std::shared_ptr<spdlog::logger> Logger::get() const noexcept
+{
+    return logger_;
+}
+
+} // namespace im_cpp::core
