@@ -1,10 +1,10 @@
 #include "core/gui_log_sink.h"
 #include <cstddef>
+#include <fmt/format.h>
 #include <mutex>
+#include <spdlog/details/log_msg.h>
 #include <utility>
 #include <vector>
-#include <fmt/format.h>
-#include <spdlog/details/log_msg.h>
 
 namespace im_cpp::core
 {

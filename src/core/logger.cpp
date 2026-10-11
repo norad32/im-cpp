@@ -1,16 +1,16 @@
 #include "core/logger.h"
+#include "core/gui_log_sink.h"
+#include "core/log_level.h"
 #include <cstdlib>
 #include <filesystem>
 #include <memory>
-#include <stdexcept>
-#include <string_view>
-#include <vector>
 #include <spdlog/common.h>
 #include <spdlog/logger.h>
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
-#include "core/gui_log_sink.h"
-#include "core/log_level.h"
+#include <stdexcept>
+#include <string_view>
+#include <vector>
 
 namespace im_cpp::core
 {

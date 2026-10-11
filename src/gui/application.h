@@ -1,9 +1,9 @@
 #pragma once
 
-#include <memory>
-#include <spdlog/logger.h>
 #include "core/gui_log_sink.h"
 #include "gui/preferences.h"
+#include <memory>
+#include <spdlog/logger.h>
 
 namespace im_cpp::gui
 {

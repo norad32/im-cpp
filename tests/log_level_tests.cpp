@@ -1,5 +1,5 @@
-#include <catch2/catch_test_macros.hpp>
 #include "core/log_level.h"
+#include <catch2/catch_test_macros.hpp>
 
 TEST_CASE("parseLogLevel_Should_ParseNamedLevels")
 {

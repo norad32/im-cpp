@@ -1,12 +1,12 @@
 #pragma once
 
-#include <filesystem>
-#include <memory>
-#include <string>
-#include <string_view>
-#include <spdlog/logger.h>
 #include "core/gui_log_sink.h"
 #include "core/log_level.h"
+#include <filesystem>
+#include <memory>
+#include <spdlog/logger.h>
+#include <string>
+#include <string_view>
 
 namespace im_cpp::core
 {

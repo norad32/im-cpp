@@ -1,10 +1,10 @@
 #pragma once
 
 #include <mutex>
-#include <string>
-#include <vector>
 #include <spdlog/details/log_msg.h>
 #include <spdlog/sinks/base_sink.h>
+#include <string>
+#include <vector>
 
 namespace im_cpp::core
 {

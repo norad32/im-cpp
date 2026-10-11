@@ -1,7 +1,7 @@
+#include "core/gui_log_sink.h"
 #include <catch2/catch_test_macros.hpp>
 #include <memory>
 #include <spdlog/logger.h>
-#include "core/gui_log_sink.h"
 
 TEST_CASE("GuiLogSink_Should_KeepNewestEntriesWhenCapacityIsReached")
 {

@@ -1,11 +1,11 @@
+#include "app/cli.h"
+#include "core/logger.h"
 #include <catch2/catch_test_macros.hpp>
 #include <filesystem>
 #include <memory>
 #include <sstream>
 #include <string_view>
 #include <vector>
-#include "app/cli.h"
-#include "core/logger.h"
 
 TEST_CASE("runCli_Should_PrintCheckResult")
 {

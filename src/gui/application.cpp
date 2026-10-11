@@ -1,20 +1,20 @@
 #include "gui/application.h"
-#include <algorithm>
-#include <cstddef>
-#include <memory>
-#include <stdexcept>
-#include <utility>
-#include <vector>
-#include <GL/gl.h>
-#include <GLFW/glfw3.h>
-#include <imgui.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_opengl3.h>
-#include <spdlog/common.h>
-#include <spdlog/logger.h>
 #include "core/gui_log_sink.h"
 #include "gui/preferences.h"
 #include "gui/preferences_store.h"
+#include <GL/gl.h>
+#include <GLFW/glfw3.h>
+#include <algorithm>
+#include <cstddef>
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
+#include <memory>
+#include <spdlog/common.h>
+#include <spdlog/logger.h>
+#include <stdexcept>
+#include <utility>
+#include <vector>
 
 namespace im_cpp::gui
 {

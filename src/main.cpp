@@ -1,16 +1,16 @@
+#include "app/cli.h"
+#include "core/logger.h"
 #include <cstddef>
 #include <iostream>
 #include <span>
 #include <string_view>
 #include <vector>
-#include "app/cli.h"
-#include "core/logger.h"
 #if IM_CPP_HAS_GUI
-#include <memory>
-#include <utility>
-#include <spdlog/logger.h>
 #include "core/gui_log_sink.h"
 #include "gui/application.h"
+#include <memory>
+#include <spdlog/logger.h>
+#include <utility>
 #endif
 
 int main(int argc, char * argv[])

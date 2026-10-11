@@ -1,3 +1,8 @@
+#include "app/cli.h"
+#include "core/application_info.h"
+#include "core/gui_log_sink.h"
+#include "core/log_level.h"
+#include "core/logger.h"
 #include <CLI/CLI.hpp>
 #include <algorithm>
 #include <exception>
@@ -7,15 +12,10 @@
 #include <optional>
 #include <ostream>
 #include <span>
+#include <spdlog/logger.h>
 #include <string>
 #include <string_view>
 #include <vector>
-#include <spdlog/logger.h>
-#include "app/cli.h"
-#include "core/application_info.h"
-#include "core/gui_log_sink.h"
-#include "core/log_level.h"
-#include "core/logger.h"
 #if IM_CPP_HAS_GUI
 #include "gui/application.h"
 #endif

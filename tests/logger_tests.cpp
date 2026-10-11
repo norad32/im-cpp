@@ -1,9 +1,9 @@
+#include "core/log_level.h"
+#include "core/logger.h"
 #include <catch2/catch_test_macros.hpp>
 #include <filesystem>
 #include <fstream>
 #include <string>
-#include "core/log_level.h"
-#include "core/logger.h"
 
 TEST_CASE("Logger_Should_WriteLogToRotatingFile")
 {

@@ -1,10 +1,10 @@
+#include "gui/preferences.h"
+#include "gui/preferences_store.h"
 #include <catch2/catch_test_macros.hpp>
 #include <cstdlib>
 #include <filesystem>
 #include <optional>
 #include <string>
-#include "gui/preferences.h"
-#include "gui/preferences_store.h"
 
 namespace
 {
