@@ -1,9 +1,10 @@
 cmake_minimum_required(VERSION 3.25)
+include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/ProjectMetadata.cmake")
 project(im_cpp_package_consumer LANGUAGES CXX)
 
 find_package(
-    im_cpp
-    0.1
+    ${IM_CPP_CMAKE_PACKAGE_NAME}
+    ${IM_CPP_PROJECT_VERSION}
     CONFIG
     REQUIRED)
 

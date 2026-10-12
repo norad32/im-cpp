@@ -1,9 +1,12 @@
 cmake_minimum_required(VERSION 3.25)
 
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/ProjectMetadata.cmake")
+
 project(
-    im_cpp
-    VERSION 0.1.0
-    DESCRIPTION "C++23 port of the im application"
+    "${IM_CPP_CMAKE_PACKAGE_NAME}"
+    VERSION "${IM_CPP_PROJECT_VERSION}"
+    DESCRIPTION "${IM_CPP_PROJECT_DESCRIPTION}"
+    HOMEPAGE_URL "${IM_CPP_PROJECT_HOMEPAGE_URL}"
     LANGUAGES CXX)
 
 set(IM_CPP_MINIMUM_GCC_VERSION 14)
@@ -36,9 +39,11 @@ if(IM_CPP_BUILD_GUI_RUNTIME AND NOT IM_CPP_BUILD_GUI)
         FATAL_ERROR "IM_CPP_BUILD_GUI_RUNTIME requires IM_CPP_BUILD_GUI=ON.")
 endif()
 set(IM_CPP_PACKAGE_NAME
-    "im-cpp"
+    "${IM_CPP_DISTRIBUTION_NAME}"
     CACHE STRING "CPack package name")
-set_property(CACHE IM_CPP_PACKAGE_NAME PROPERTY STRINGS im-cpp im-cpp-gui)
+set_property(
+    CACHE IM_CPP_PACKAGE_NAME PROPERTY STRINGS "${IM_CPP_DISTRIBUTION_NAME}"
+                                       "${IM_CPP_DISTRIBUTION_NAME}-gui")
 set(CMAKE_CXX_STANDARD 23)
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -48,7 +53,14 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(GNUInstallDirs)
 include(CompilerSettings)
 include(DependencyPins)
-set(IM_CPP_INSTALL_CMAKEDIR "${CMAKE_INSTALL_LIBDIR}/cmake/im_cpp")
+set(IM_CPP_INSTALL_CMAKEDIR
+    "${CMAKE_INSTALL_LIBDIR}/cmake/${IM_CPP_CMAKE_PACKAGE_NAME}")
+set(IM_CPP_GENERATED_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
+set(IM_CPP_GENERATED_METADATA_HEADER
+    "${IM_CPP_GENERATED_INCLUDE_DIR}/core/application_metadata.h")
+file(MAKE_DIRECTORY "${IM_CPP_GENERATED_INCLUDE_DIR}/core")
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/application_metadata.h.in"
+               "${IM_CPP_GENERATED_METADATA_HEADER}" @ONLY)
 
 add_library(im_cpp_options INTERFACE)
 set_target_properties(im_cpp_options PROPERTIES EXPORT_NAME options)
@@ -56,8 +68,11 @@ target_compile_features(im_cpp_options INTERFACE cxx_std_23)
 set_target_properties(im_cpp_options PROPERTIES CXX_EXTENSIONS OFF)
 target_include_directories(
     im_cpp_options
-    INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
-              $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/im_cpp>)
+    INTERFACE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+        $<BUILD_INTERFACE:${IM_CPP_GENERATED_INCLUDE_DIR}>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${IM_CPP_CMAKE_PACKAGE_NAME}>
+)
 
 find_package(
     spdlog
@@ -114,8 +129,12 @@ target_link_libraries(im_core PUBLIC im_cpp_options spdlog::spdlog)
 add_library(im_app src/app/cli.cpp)
 set_target_properties(im_app PROPERTIES EXPORT_NAME app)
 target_include_directories(
-    im_app PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
-                  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/im_cpp>)
+    im_app
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+        $<BUILD_INTERFACE:${IM_CPP_GENERATED_INCLUDE_DIR}>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${IM_CPP_CMAKE_PACKAGE_NAME}>
+)
 target_link_libraries(im_app PUBLIC im_core im_cpp_options)
 if(IM_CPP_ENABLE_COVERAGE)
     target_link_options(
@@ -138,8 +157,8 @@ if(IM_CPP_ENABLE_COVERAGE)
     target_link_libraries(im_cli INTERFACE gcov)
 endif()
 
-add_executable(im-cpp src/main.cpp)
-target_link_libraries(im-cpp PRIVATE im_cli)
+add_executable(${IM_CPP_EXECUTABLE_NAME} src/main.cpp)
+target_link_libraries(${IM_CPP_EXECUTABLE_NAME} PRIVATE im_cli)
 
 target_include_directories(
     im_app SYSTEM
@@ -171,10 +190,11 @@ if(IM_CPP_BUILD_GUI)
     set_target_properties(imgui PROPERTIES EXPORT_NAME imgui)
     target_include_directories(
         im_gui
-        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
-               $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/im_cpp>
-               $<BUILD_INTERFACE:${imgui_SOURCE_DIR}>
-               $<BUILD_INTERFACE:${imgui_SOURCE_DIR}/backends>)
+        PUBLIC
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${IM_CPP_CMAKE_PACKAGE_NAME}>
+            $<BUILD_INTERFACE:${imgui_SOURCE_DIR}>
+            $<BUILD_INTERFACE:${imgui_SOURCE_DIR}/backends>)
     target_link_libraries(
         im_gui
         PUBLIC imgui
@@ -184,32 +204,35 @@ if(IM_CPP_BUILD_GUI)
                im_cpp_options)
     target_sources(im_gui PRIVATE src/gui/preferences.cpp)
     target_link_libraries(im_app PUBLIC im_gui)
-    target_link_libraries(im-cpp PRIVATE im_gui)
+    target_link_libraries(${IM_CPP_EXECUTABLE_NAME} PRIVATE im_gui)
     if(IM_CPP_BUILD_GUI_RUNTIME)
-        add_executable(im-cpp-gui src/gui_main.cpp)
+        add_executable(${IM_CPP_GUI_EXECUTABLE_NAME} src/gui_main.cpp)
         target_link_libraries(
-            im-cpp-gui
+            ${IM_CPP_GUI_EXECUTABLE_NAME}
             PRIVATE im_app
                     im_cpp_options
                     im_gui
                     CLI11::CLI11)
-        target_compile_definitions(im-cpp-gui PRIVATE IM_CPP_HAS_GUI=1)
+        target_compile_definitions(${IM_CPP_GUI_EXECUTABLE_NAME}
+                                   PRIVATE IM_CPP_HAS_GUI=1)
     endif()
-    target_compile_definitions(im-cpp PRIVATE IM_CPP_HAS_GUI=1)
+    target_compile_definitions(${IM_CPP_EXECUTABLE_NAME}
+                               PRIVATE IM_CPP_HAS_GUI=1)
 else()
     target_compile_definitions(im_app PUBLIC IM_CPP_HAS_GUI=0)
-    target_compile_definitions(im-cpp PRIVATE IM_CPP_HAS_GUI=0)
+    target_compile_definitions(${IM_CPP_EXECUTABLE_NAME}
+                               PRIVATE IM_CPP_HAS_GUI=0)
 endif()
 
 set(im_cpp_compile_targets
     im_core
     im_app
     im_cli
-    im-cpp)
+    ${IM_CPP_EXECUTABLE_NAME})
 if(IM_CPP_BUILD_GUI)
     list(APPEND im_cpp_compile_targets im_gui)
     if(IM_CPP_BUILD_GUI_RUNTIME)
-        list(APPEND im_cpp_compile_targets im-cpp-gui)
+        list(APPEND im_cpp_compile_targets ${IM_CPP_GUI_EXECUTABLE_NAME})
     endif()
 endif()
 foreach(target IN LISTS im_cpp_compile_targets)
@@ -264,7 +287,8 @@ if(IM_CPP_BUILD_TESTS)
     if(IM_CPP_BUILD_GUI)
         target_link_libraries(im_cpp_tests PRIVATE im_gui)
         if(IM_CPP_INSTALL_GUI)
-            target_link_libraries(im_cpp_tests PRIVATE im-cpp-gui)
+            target_link_libraries(im_cpp_tests
+                                  PRIVATE ${IM_CPP_GUI_EXECUTABLE_NAME})
         endif()
     endif()
     apply_unit_test_compile_options(im_cpp_tests)
@@ -285,16 +309,18 @@ if(IM_CPP_BUILD_TESTS)
         endif()
     endif()
     catch_discover_tests(im_cpp_tests)
-    add_test(NAME im_cpp_cli_check COMMAND im-cpp check)
-    add_test(NAME im_cpp_cli_version COMMAND im-cpp --version)
+    add_test(NAME im_cpp_cli_check COMMAND ${IM_CPP_EXECUTABLE_NAME} check)
+    add_test(NAME im_cpp_cli_version COMMAND ${IM_CPP_EXECUTABLE_NAME}
+                                             --version)
     if(IM_CPP_BUILD_GUI_RUNTIME)
-        add_test(NAME im_cpp_gui_cli_version COMMAND im-cpp-gui --version)
+        add_test(NAME im_cpp_gui_cli_version
+                 COMMAND ${IM_CPP_GUI_EXECUTABLE_NAME} --version)
     endif()
 endif()
 
 if(IM_CPP_ENABLE_CLANG_TIDY)
     find_program(IM_CPP_CLANG_TIDY_EXECUTABLE NAMES clang-tidy REQUIRED)
-    set(clang_tidy_targets im_core im_app im-cpp)
+    set(clang_tidy_targets im_core im_app ${IM_CPP_EXECUTABLE_NAME})
     if(IM_CPP_BUILD_GUI)
         list(APPEND clang_tidy_targets im_gui)
     endif()

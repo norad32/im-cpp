@@ -39,7 +39,8 @@ namespace
 void configureApplication(CLI::App & application, std::string & logLevel, CLI::App *& checkCommand, CLI::App *& guiCommand)
 {
     application.set_help_flag("-h,--help");
-    application.set_version_flag("-V,--version", std::string(core::applicationName()) + " 0.1.0");
+    application.set_version_flag("-V,--version",
+                                 std::string(core::applicationName()) + " " + std::string(core::applicationVersion()));
     application.add_option("--log-level,-l", logLevel, "Set the logging level");
 
     checkCommand = application.add_subcommand("check", "Run a logging check");

@@ -10,5 +10,4 @@ override_dh_auto_configure:
 		-DCMAKE_CXX_FLAGS=-march=x86-64 \
 		-DIM_CPP_BUILD_TESTS=OFF \
 		-DIM_CPP_BUILD_GUI=OFF \
-		-DIM_CPP_INSTALL_GUI=OFF \
-		-DIM_CPP_PACKAGE_NAME=im-cpp
+		-DIM_CPP_INSTALL_GUI=OFF
