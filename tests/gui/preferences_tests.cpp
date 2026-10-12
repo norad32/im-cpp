@@ -1,6 +1,7 @@
 #include "gui/preferences.h"
 #include "gui/preferences_store.h"
 #include <catch2/catch_test_macros.hpp>
+#include <cmath>
 #include <cstdlib>
 #include <filesystem>
 #include <optional>
@@ -57,6 +58,8 @@ TEST_CASE("loadPreferences_Should_UseDefaultsWhenFileIsMissing")
 
     REQUIRE_FALSE(preferences.showLogPanel);
     REQUIRE(preferences.autoScroll);
+    REQUIRE_FALSE(preferences.logPanelCollapsed);
+    REQUIRE(std::abs(preferences.logPanelHeight) < 0.001F);
     std::filesystem::remove_all(configDirectory);
 }
 
@@ -65,12 +68,15 @@ TEST_CASE("savePreferences_Should_RoundTripSettings")
     const auto configDirectory = std::filesystem::temp_directory_path() / "im-cpp-pref-roundtrip";
     std::filesystem::remove_all(configDirectory);
     EnvironmentVariableGuard configDirectoryGuard("XDG_CONFIG_HOME", configDirectory);
-    const im_cpp::gui::Preferences expected{.showLogPanel = true, .autoScroll = false};
+    const im_cpp::gui::Preferences expected{
+        .showLogPanel = true, .autoScroll = false, .logPanelCollapsed = true, .logPanelHeight = 268.5F};
 
     im_cpp::gui::savePreferences(expected);
     const auto actual = im_cpp::gui::loadPreferences();
 
     REQUIRE(actual.showLogPanel);
     REQUIRE_FALSE(actual.autoScroll);
+    REQUIRE(actual.logPanelCollapsed);
+    REQUIRE(std::abs(actual.logPanelHeight - 268.5F) < 0.001F);
     std::filesystem::remove_all(configDirectory);
 }

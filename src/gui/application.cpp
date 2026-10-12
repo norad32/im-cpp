@@ -5,6 +5,7 @@
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
 #include <algorithm>
+#include <cmath>
 #include <cstddef>
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
@@ -21,7 +22,7 @@ namespace im_cpp::gui
 namespace
 {
 
-constexpr float minimumLogPanelHeight = 148.0F;
+constexpr float minimumLogPanelHeight = 96.0F;
 constexpr float initialMainWindowWidth = 520.0F;
 constexpr float initialMainWindowHeight = 250.0F;
 constexpr int initialApplicationWindowWidth = 1280;
@@ -102,8 +103,8 @@ void drawMainWindow(spdlog::logger & logger, Preferences & preferences, bool & s
     ImGui::SetNextWindowSize(ImVec2(initialMainWindowWidth, initialMainWindowHeight), ImGuiCond_FirstUseEver);
     if (ImGui::Begin("im-cpp"))
     {
-        ImGui::Text("Hello from %s!", logger.name().c_str());
-        if (ImGui::Button(preferences.showLogPanel ? "Hide Logs" : "Show Logs"))
+        ImGui::Text("Hello I'm C++!");
+        if (ImGui::Button(preferences.showLogPanel ? "Hide Logs (§)" : "Show Logs (§)"))
         {
             preferences.showLogPanel = !preferences.showLogPanel;
             savePreferences(preferences);
@@ -179,18 +180,47 @@ void drawLogPanel(core::GuiLogSink & logSink,
         return;
     }
     const ImGuiViewport * viewport = ImGui::GetMainViewport();
-    const float panelHeight = std::max(minimumLogPanelHeight, viewport->Size.y * logPanelHeightRatio);
+    const bool wasVisible = preferences.showLogPanel;
+    const float maximumPanelHeight = std::max(minimumLogPanelHeight, viewport->WorkSize.y * 0.8F);
+    if (preferences.logPanelHeight <= 0.0F)
+    {
+        preferences.logPanelHeight =
+            std::clamp(viewport->WorkSize.y * logPanelHeightRatio, minimumLogPanelHeight, maximumPanelHeight);
+    }
+    preferences.logPanelHeight = std::clamp(preferences.logPanelHeight, minimumLogPanelHeight, maximumPanelHeight);
+    const float collapsedPanelHeight = ImGui::GetFrameHeight();
+    const float panelHeight = preferences.logPanelCollapsed ? collapsedPanelHeight : preferences.logPanelHeight;
+    const float minimumPanelHeight = preferences.logPanelCollapsed ? collapsedPanelHeight : minimumLogPanelHeight;
+    ImGui::SetNextWindowSizeConstraints(ImVec2(viewport->WorkSize.x, minimumPanelHeight),
+                                        ImVec2(viewport->WorkSize.x, maximumPanelHeight));
     ImGui::SetNextWindowPos(ImVec2(viewport->WorkPos.x, viewport->WorkPos.y + viewport->WorkSize.y - panelHeight),
                             ImGuiCond_Always);
-    ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x, panelHeight), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x, preferences.logPanelHeight), ImGuiCond_Appearing);
+    ImGui::SetNextWindowCollapsed(preferences.logPanelCollapsed, ImGuiCond_Appearing);
     constexpr auto panelFlags = static_cast<ImGuiWindowFlags>(static_cast<unsigned int>(ImGuiWindowFlags_NoMove) |
-                                                              static_cast<unsigned int>(ImGuiWindowFlags_NoCollapse) |
                                                               static_cast<unsigned int>(ImGuiWindowFlags_NoSavedSettings));
-    if (ImGui::Begin("Logs", &preferences.showLogPanel, panelFlags))
+    const bool windowContentsVisible = ImGui::Begin("Logs", &preferences.showLogPanel, panelFlags);
+    const bool isCollapsed = ImGui::IsWindowCollapsed();
+    if (isCollapsed != preferences.logPanelCollapsed)
+    {
+        preferences.logPanelCollapsed = isCollapsed;
+        savePreferences(preferences);
+    }
+    if (windowContentsVisible && !isCollapsed)
     {
         drawLogPanelContents(logSink, preferences, entries, followScroll);
+        const float updatedPanelHeight = ImGui::GetWindowSize().y;
+        if (std::abs(updatedPanelHeight - preferences.logPanelHeight) > 1.0F)
+        {
+            preferences.logPanelHeight = updatedPanelHeight;
+            savePreferences(preferences);
+        }
     }
     ImGui::End();
+    if (preferences.showLogPanel != wasVisible)
+    {
+        savePreferences(preferences);
+    }
 }
 
 void renderFrame(GLFWwindow * window)

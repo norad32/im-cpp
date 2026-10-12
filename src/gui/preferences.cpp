@@ -1,9 +1,11 @@
 #include "gui/preferences.h"
 #include "gui/preferences_store.h"
+#include <algorithm>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <ios>
+#include <sstream>
 #include <string>
 #include <string_view>
 
@@ -33,16 +35,28 @@ Preferences loadPreferences()
     Preferences preferences;
     std::ifstream file(preferencesPath());
     std::string key;
-    int value = 0;
+    std::string value;
     while (file >> key >> value)
     {
         if (key == "logs_panel_visible")
         {
-            preferences.showLogPanel = value != 0;
+            preferences.showLogPanel = value == "1";
         }
         else if (key == "logs_autoscroll")
         {
-            preferences.autoScroll = value != 0;
+            preferences.autoScroll = value == "1";
+        }
+        else if (key == "logs_panel_height")
+        {
+            std::istringstream valueStream(value);
+            if (valueStream >> preferences.logPanelHeight)
+            {
+                preferences.logPanelHeight = std::max(0.0F, preferences.logPanelHeight);
+            }
+        }
+        else if (key == "logs_panel_collapsed")
+        {
+            preferences.logPanelCollapsed = value == "1";
         }
     }
     return preferences;
@@ -55,6 +69,8 @@ void savePreferences(const Preferences & preferences)
     std::ofstream file(path, std::ios::trunc);
     file << "logs_panel_visible " << static_cast<int>(preferences.showLogPanel) << '\n';
     file << "logs_autoscroll " << static_cast<int>(preferences.autoScroll) << '\n';
+    file << "logs_panel_height " << preferences.logPanelHeight << '\n';
+    file << "logs_panel_collapsed " << static_cast<int>(preferences.logPanelCollapsed) << '\n';
 }
 
 } // namespace im_cpp::gui
