@@ -4,7 +4,7 @@
 #include "core/log_level.h"
 #include "core/logger.h"
 #include <CLI/CLI.hpp>
-#if !IM_CPP_HAS_GUI
+#if !HAS_GUI
 #include <algorithm>
 #endif
 #include <exception>
@@ -104,7 +104,7 @@ int runCli(std::span<const std::string_view> arguments,
         try
         {
             const auto logSink = logger.attachGuiSink();
-#if IM_CPP_HAS_GUI
+#if HAS_GUI
             if (!runGui)
             {
                 error << "GUI runner is unavailable in this build\n";

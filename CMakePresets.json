@@ -10,10 +10,10 @@
         "CMAKE_CXX_COMPILER": "g++",
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_BUILD_WITH_INSTALL_RPATH": "ON",
-        "IM_CPP_ENABLE_COVERAGE": "ON",
-        "IM_CPP_BUILD_TESTS": "ON",
-        "IM_CPP_BUILD_GUI": "ON",
-        "IM_CPP_ENABLE_CLANG_TIDY": "ON"
+        "ENABLE_COVERAGE": "ON",
+        "BUILD_TESTS": "ON",
+        "BUILD_GUI": "ON",
+        "ENABLE_CLANG_TIDY": "ON"
       }
     },
     {
@@ -26,12 +26,12 @@
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_BUILD_WITH_INSTALL_RPATH": "ON",
         "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/install/release-gui",
-        "IM_CPP_INSTALL_GUI": "OFF",
-        "IM_CPP_BUILD_GUI_RUNTIME": "ON",
-        "IM_CPP_ENABLE_COVERAGE": "OFF",
-        "IM_CPP_BUILD_TESTS": "ON",
-        "IM_CPP_BUILD_GUI": "ON",
-        "IM_CPP_ENABLE_CLANG_TIDY": "OFF"
+        "INSTALL_GUI": "OFF",
+        "BUILD_GUI_RUNTIME": "ON",
+        "ENABLE_COVERAGE": "OFF",
+        "BUILD_TESTS": "ON",
+        "BUILD_GUI": "ON",
+        "ENABLE_CLANG_TIDY": "OFF"
       }
     },
     {
@@ -44,12 +44,12 @@
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_BUILD_WITH_INSTALL_RPATH": "ON",
         "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/install/release-headless",
-        "IM_CPP_ENABLE_COVERAGE": "OFF",
-        "IM_CPP_BUILD_TESTS": "ON",
-        "IM_CPP_BUILD_GUI": "OFF",
-        "IM_CPP_INSTALL_GUI": "OFF",
-        "IM_CPP_BUILD_GUI_RUNTIME": "OFF",
-        "IM_CPP_ENABLE_CLANG_TIDY": "OFF"
+        "ENABLE_COVERAGE": "OFF",
+        "BUILD_TESTS": "ON",
+        "BUILD_GUI": "OFF",
+        "INSTALL_GUI": "OFF",
+        "BUILD_GUI_RUNTIME": "OFF",
+        "ENABLE_CLANG_TIDY": "OFF"
       }
     }
   ],

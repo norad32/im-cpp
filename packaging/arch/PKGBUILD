@@ -12,25 +12,25 @@ sha256sums=('SKIP')
 
 build() {
     cmake -S "${srcdir}/im-cpp-${pkgver}" -B "${srcdir}/build-headless" -G Ninja \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_CXX_COMPILER=g++ \
-        -DCMAKE_INSTALL_PREFIX=/usr \
-        -DIM_CPP_BUILD_TESTS=OFF \
-        -DIM_CPP_BUILD_GUI=OFF \
-        -DIM_CPP_INSTALL_GUI=OFF \
-        -DIM_CPP_PACKAGE_NAME=im-cpp
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_CXX_COMPILER=g++ \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DBUILD_TESTS=OFF \
+    -DBUILD_GUI=OFF \
+    -DINSTALL_GUI=OFF \
+    -DPACKAGE_NAME=im-cpp
     cmake --build "${srcdir}/build-headless" --parallel
-
+    
     cmake -S "${srcdir}/im-cpp-${pkgver}" -B "${srcdir}/build-gui" -G Ninja \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_CXX_COMPILER=g++ \
-        -DCMAKE_INSTALL_PREFIX=/usr \
-        -DIM_CPP_BUILD_TESTS=OFF \
-        -DIM_CPP_BUILD_GUI=ON \
-        -DIM_CPP_INSTALL_GUI=ON \
-        -DIM_CPP_BUILD_GUI_RUNTIME=ON \
-        -DIM_CPP_PACKAGE_NAME=im-cpp
-
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_CXX_COMPILER=g++ \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DBUILD_TESTS=OFF \
+    -DBUILD_GUI=ON \
+    -DINSTALL_GUI=ON \
+    -DBUILD_GUI_RUNTIME=ON \
+    -DPACKAGE_NAME=im-cpp
+    
     cmake --build "${srcdir}/build-gui" --parallel
 }
 

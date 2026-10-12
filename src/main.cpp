@@ -5,7 +5,7 @@
 #include <span>
 #include <string_view>
 #include <vector>
-#if IM_CPP_HAS_GUI
+#if HAS_GUI
 #include "core/gui_log_sink.h"
 #include "gui/application.h"
 #include <memory>
@@ -24,7 +24,7 @@ int main(int argc, char * argv[])
     }
 
     im_cpp::core::Logger logger;
-#if IM_CPP_HAS_GUI
+#if HAS_GUI
     return im_cpp::app::runCli(
         arguments,
         std::cout,

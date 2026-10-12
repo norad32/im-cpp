@@ -22,7 +22,7 @@ jobs:
           printf '%s\n' "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Configure Debug
-        run: cmake --preset debug -DIM_CPP_ENABLE_CLANG_TIDY=ON -DIM_CPP_ENABLE_COVERAGE=ON
+        run: cmake --preset debug -DENABLE_CLANG_TIDY=ON -DENABLE_COVERAGE=ON
 
       - name: Build Debug
         run: cmake --build --preset debug --parallel 2
@@ -40,7 +40,7 @@ jobs:
           path: build/debug/coverage.xml
 
       - name: Configure GUI Release
-        run: cmake --preset release-gui -DIM_CPP_ENABLE_CLANG_TIDY=OFF
+        run: cmake --preset release-gui -DENABLE_CLANG_TIDY=OFF
 
       - name: Build GUI Release
         run: cmake --build --preset release-gui --parallel 2
@@ -52,7 +52,7 @@ jobs:
         run: ctest --preset release-gui
 
       - name: Configure Headless Release
-        run: cmake --preset release-headless -DIM_CPP_ENABLE_CLANG_TIDY=OFF
+        run: cmake --preset release-headless -DENABLE_CLANG_TIDY=OFF
 
       - name: Build Headless Release
         run: cmake --build --preset release-headless --parallel 2
@@ -83,7 +83,7 @@ jobs:
 
 
       - name: Configure headless GCC
-        run: cmake -S . -B build/headless -G Ninja -DCMAKE_CXX_COMPILER=g++-14 -DCMAKE_BUILD_TYPE=Debug -DIM_CPP_BUILD_GUI=OFF -DIM_CPP_BUILD_TESTS=ON -DIM_CPP_ENABLE_CLANG_TIDY=OFF -DIM_CPP_ENABLE_COVERAGE=OFF
+        run: cmake -S . -B build/headless -G Ninja -DCMAKE_CXX_COMPILER=g++-14 -DCMAKE_BUILD_TYPE=Debug -DBUILD_GUI=OFF -DBUILD_TESTS=ON -DENABLE_CLANG_TIDY=OFF -DENABLE_COVERAGE=OFF
 
       - name: Build headless GCC
         run: cmake --build build/headless --parallel 2

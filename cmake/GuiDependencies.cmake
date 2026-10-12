@@ -16,7 +16,7 @@ target_include_directories(
     PUBLIC
         $<BUILD_INTERFACE:${imgui_SOURCE_DIR}>
         $<BUILD_INTERFACE:${imgui_SOURCE_DIR}/backends>
-        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${IM_CPP_CMAKE_PACKAGE_NAME}/imgui>
-        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${IM_CPP_CMAKE_PACKAGE_NAME}/imgui/backends>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${CMAKE_PACKAGE_NAME}/imgui>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${CMAKE_PACKAGE_NAME}/imgui/backends>
 )
 target_link_libraries(imgui PUBLIC glfw OpenGL::GL)
