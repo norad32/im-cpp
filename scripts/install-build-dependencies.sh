@@ -15,6 +15,7 @@ install_apt() {
     local package
     local -a required_packages=(
         build-essential
+        g++-14
         cmake
         ninja-build
         clang-tidy

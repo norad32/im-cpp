@@ -1,4 +1,7 @@
 {
+    "cmake.useCMakePresets": "always",
+    "cmake.configureOnOpen": true,
+    "cmake.ctest.testExplorerIntegrationEnabled": true,
     "files.autoSave": "off",
     "editor.formatOnSave": true,
     "[shellscript]": {

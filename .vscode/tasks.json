@@ -16,7 +16,7 @@
         {
             "label": "Build and test Debug",
             "type": "shell",
-            "command": "cmake --preset debug && cmake --build --preset debug && ctest --preset debug",
+            "command": "cmake --preset debug -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON && cmake --build --preset debug && ctest --preset debug",
             "options": {
                 "cwd": "${workspaceFolder}"
             },
@@ -24,9 +24,19 @@
             "problemMatcher": ["$gcc"]
         },
         {
-            "label": "Build and test Release",
+            "label": "Build and test Release (GUI)",
             "type": "shell",
-            "command": "cmake --preset release && cmake --build --preset release && ctest --preset release",
+            "command": "cmake --preset release-gui -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON && cmake --build --preset release-gui && ctest --preset release-gui",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": "build",
+            "problemMatcher": ["$gcc"]
+        },
+        {
+            "label": "Build and test Release (Headless)",
+            "type": "shell",
+            "command": "cmake --preset release-headless -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON && cmake --build --preset release-headless && ctest --preset release-headless",
             "options": {
                 "cwd": "${workspaceFolder}"
             },

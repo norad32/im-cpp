@@ -9,22 +9,49 @@
       "cacheVariables": {
         "CMAKE_CXX_COMPILER": "g++",
         "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_BUILD_WITH_INSTALL_RPATH": "ON",
+        "IM_CPP_ENABLE_COVERAGE": "ON",
         "IM_CPP_BUILD_TESTS": "ON",
         "IM_CPP_BUILD_GUI": "ON",
         "IM_CPP_ENABLE_CLANG_TIDY": "ON"
       }
     },
     {
-      "name": "release",
-      "displayName": "Release (Ninja)",
+      "name": "release-gui",
+      "displayName": "Release GUI (Ninja)",
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build/release",
+      "binaryDir": "${sourceDir}/build/release-gui",
       "cacheVariables": {
         "CMAKE_CXX_COMPILER": "g++",
         "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_BUILD_WITH_INSTALL_RPATH": "ON",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/install/release-gui",
+        "IM_CPP_INSTALL_GUI": "OFF",
+        "IM_CPP_BUILD_GUI_RUNTIME": "ON",
+        "IM_CPP_PACKAGE_NAME": "im-cpp",
+        "IM_CPP_ENABLE_COVERAGE": "OFF",
         "IM_CPP_BUILD_TESTS": "ON",
         "IM_CPP_BUILD_GUI": "ON",
-        "IM_CPP_ENABLE_CLANG_TIDY": "ON"
+        "IM_CPP_ENABLE_CLANG_TIDY": "OFF"
+      }
+    },
+    {
+      "name": "release-headless",
+      "displayName": "Release Headless (Ninja)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/release-headless",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "g++",
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_BUILD_WITH_INSTALL_RPATH": "ON",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/install/release-headless",
+        "IM_CPP_PACKAGE_NAME": "im-cpp",
+        "IM_CPP_ENABLE_COVERAGE": "OFF",
+        "IM_CPP_BUILD_TESTS": "ON",
+        "IM_CPP_BUILD_GUI": "OFF",
+        "IM_CPP_INSTALL_GUI": "OFF",
+        "IM_CPP_BUILD_GUI_RUNTIME": "OFF",
+        "IM_CPP_ENABLE_CLANG_TIDY": "OFF"
       }
     }
   ],
@@ -34,8 +61,12 @@
       "configurePreset": "debug"
     },
     {
-      "name": "release",
-      "configurePreset": "release"
+      "name": "release-gui",
+      "configurePreset": "release-gui"
+    },
+    {
+      "name": "release-headless",
+      "configurePreset": "release-headless"
     }
   ],
   "testPresets": [
@@ -47,8 +78,15 @@
       }
     },
     {
-      "name": "release",
-      "configurePreset": "release",
+      "name": "release-gui",
+      "configurePreset": "release-gui",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "release-headless",
+      "configurePreset": "release-headless",
       "output": {
         "outputOnFailure": true
       }

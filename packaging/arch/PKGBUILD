@@ -1,0 +1,53 @@
+pkgbase=im-cpp
+pkgname=('im-cpp' 'im-cpp-gui' 'im-cpp-devel')
+pkgver=0.1.0
+pkgrel=1
+pkgdesc='C++23 port of the im application'
+arch=('x86_64' 'aarch64')
+url='https://github.com/norad32/im-cpp'
+license=('MIT')
+makedepends=('cmake>=3.25' 'gcc>=14' 'ninja' 'pkgconf' 'glfw' 'mesa')
+source=("im-cpp-${pkgver}.tar.gz::https://github.com/norad32/im-cpp/archive/refs/tags/v${pkgver}.tar.gz")
+sha256sums=('SKIP')
+
+build() {
+    cmake -S "${srcdir}/im-cpp-${pkgver}" -B "${srcdir}/build-headless" -G Ninja \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_CXX_COMPILER=g++ \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DIM_CPP_BUILD_TESTS=OFF \
+        -DIM_CPP_BUILD_GUI=OFF \
+        -DIM_CPP_INSTALL_GUI=OFF \
+        -DIM_CPP_PACKAGE_NAME=im-cpp
+    cmake --build "${srcdir}/build-headless" --parallel
+
+    cmake -S "${srcdir}/im-cpp-${pkgver}" -B "${srcdir}/build-gui" -G Ninja \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_CXX_COMPILER=g++ \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DIM_CPP_BUILD_TESTS=OFF \
+        -DIM_CPP_BUILD_GUI=ON \
+        -DIM_CPP_INSTALL_GUI=ON \
+        -DIM_CPP_BUILD_GUI_RUNTIME=ON \
+        -DIM_CPP_PACKAGE_NAME=im-cpp
+
+    cmake --build "${srcdir}/build-gui" --parallel
+}
+
+package_im-cpp() {
+    DESTDIR="${pkgdir}" cmake --install "${srcdir}/build-headless" --prefix /usr --component Runtime
+    install -Dm644 "${srcdir}/im-cpp-${pkgver}/LICENSE" "${pkgdir}/usr/share/licenses/im-cpp/LICENSE"
+}
+
+package_im-cpp-gui() {
+    depends=('glfw' 'mesa')
+    DESTDIR="${pkgdir}" cmake --install "${srcdir}/build-gui" --prefix /usr --component Gui
+    install -Dm644 "${srcdir}/im-cpp-${pkgver}/LICENSE" "${pkgdir}/usr/share/licenses/im-cpp-gui/LICENSE"
+}
+
+package_im-cpp-devel() {
+    depends=('im-cpp' 'im-cpp-gui')
+    DESTDIR="${pkgdir}" cmake --install "${srcdir}/build-headless" --prefix /usr --component Development
+    DESTDIR="${pkgdir}" cmake --install "${srcdir}/build-gui" --prefix /usr --component Development
+    install -Dm644 "${srcdir}/im-cpp-${pkgver}/LICENSE" "${pkgdir}/usr/share/licenses/im-cpp-devel/LICENSE"
+}

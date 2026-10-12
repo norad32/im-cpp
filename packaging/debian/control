@@ -1,0 +1,26 @@
+Source: im-cpp
+Section: utils
+Priority: optional
+Maintainer: norad32
+Standards-Version: 4.6.2
+Build-Depends: debhelper-compat (= 13), cmake (>= 3.25), g++ (>= 14),
+ libglfw3-dev, libgl1-mesa-dev, ninja-build, pkg-config
+Rules-Requires-Root: no
+
+Package: im-cpp
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: C++23 runtime for im-cpp
+ Command-line application for im-cpp.
+
+Package: im-cpp-gui
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, im-cpp (= ${binary:Version}), libglfw3, libgl1
+Description: GUI runtime for im-cpp
+ Graphical desktop executable for im-cpp.
+
+Package: im-cpp-dev
+Architecture: any
+Depends: ${misc:Depends}, im-cpp (= ${binary:Version}), im-cpp-gui (= ${binary:Version})
+Description: Development files for im-cpp
+ Headers, static libraries, and CMake exports for im-cpp.

@@ -4,7 +4,9 @@
 #include "core/log_level.h"
 #include "core/logger.h"
 #include <CLI/CLI.hpp>
+#if !IM_CPP_HAS_GUI
 #include <algorithm>
+#endif
 #include <exception>
 #include <filesystem>
 #include <functional>
@@ -16,9 +18,6 @@
 #include <string>
 #include <string_view>
 #include <vector>
-#if IM_CPP_HAS_GUI
-#include "gui/application.h"
-#endif
 
 namespace im_cpp::app
 {
@@ -105,7 +104,13 @@ int runCli(std::span<const std::string_view> arguments,
         {
             const auto logSink = logger.attachGuiSink();
 #if IM_CPP_HAS_GUI
-            const int result = runGui ? runGui(logger.get(), logSink) : gui::Application(logger.get(), logSink).run();
+            if (!runGui)
+            {
+                error << "GUI runner is unavailable in this build\n";
+                logger.shutdown();
+                return 1;
+            }
+            const int result = runGui(logger.get(), logSink);
 #else
             if (!runGui)
             {

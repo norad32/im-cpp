@@ -19,7 +19,6 @@ set(COVERAGE_COMPILE_OPTIONS -fprofile-arcs -ftest-coverage)
 set(UNIT_TEST_COMPILE_OPTIONS -fno-elide-constructors)
 set(RELEASE_OPT_OPTIONS ${COMMON_OPT_OPTIONS} -O2)
 set(DIAGMSG_OPTIONS -fmessage-length=0)
-set(CXX_OPTIONS -std=gnu++23)
 
 function(apply_common_compile_options target_name)
     if(NOT TARGET ${target_name})
@@ -41,7 +40,6 @@ function(apply_common_compile_options target_name)
         ${scope}
         ${WARNING_OPTIONS}
         ${DIAGMSG_OPTIONS}
-        ${CXX_OPTIONS}
         $<$<CONFIG:Debug>:${DEBUG_OPT_OPTIONS}>
         $<$<CONFIG:Debug>:${DEBUGGING_OPTIONS}>
         $<$<CONFIG:Release>:${RELEASE_OPT_OPTIONS}>)
@@ -87,10 +85,20 @@ function(apply_unit_test_link_options target_name)
         )
     endif()
 
-    target_link_options(
-        ${target_name}
-        PRIVATE
-        -fprofile-arcs
-        -ftest-coverage)
-    target_link_libraries(${target_name} PRIVATE gcov)
+    get_target_property(target_type ${target_name} TYPE)
+    if(target_type STREQUAL "INTERFACE_LIBRARY")
+        target_link_options(
+            ${target_name}
+            INTERFACE
+            -fprofile-arcs
+            -ftest-coverage)
+        target_link_libraries(${target_name} INTERFACE gcov)
+    else()
+        target_link_options(
+            ${target_name}
+            PRIVATE
+            -fprofile-arcs
+            -ftest-coverage)
+        target_link_libraries(${target_name} PRIVATE gcov)
+    endif()
 endfunction()

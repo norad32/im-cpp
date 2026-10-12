@@ -5,9 +5,8 @@
 #include <iosfwd>
 #include <memory>
 #include <span>
-#include <string_view>
-
 #include <spdlog/logger.h>
+#include <string_view>
 
 #include "core/gui_log_sink.h"
 #include "core/logger.h"

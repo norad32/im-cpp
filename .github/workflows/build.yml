@@ -1,0 +1,121 @@
+name: Build and test
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - name: Install build and formatting dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential clang-format clang-tidy debhelper dh-cmake gcovr libglfw3-dev libgl1-mesa-dev ninja-build pkg-config pipx python3-venv
+          pipx install cmakelang==0.6.13
+          pipx inject cmakelang pyyaml==6.0.2
+          printf '%s\n' "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Configure Debug
+        run: cmake --preset debug -DIM_CPP_ENABLE_CLANG_TIDY=ON -DIM_CPP_ENABLE_COVERAGE=ON
+
+      - name: Build Debug
+        run: cmake --build --preset debug --parallel 2
+
+      - name: Test Debug
+        run: ctest --preset debug
+
+      - name: Generate coverage report
+        run: gcovr --merge-mode-functions=merge-use-line-min --root . --filter 'src/' --xml-pretty --output build/debug/coverage.xml
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: debug-coverage
+          path: build/debug/coverage.xml
+
+      - name: Configure GUI Release
+        run: cmake --preset release-gui -DIM_CPP_ENABLE_CLANG_TIDY=OFF
+
+      - name: Build GUI Release
+        run: cmake --build --preset release-gui --parallel 2
+
+      - name: Install GUI Release
+        run: cmake --install build/release-gui --prefix "$RUNNER_TEMP/release-gui"
+
+      - name: Test GUI Release
+        run: ctest --preset release-gui
+
+      - name: Configure Headless Release
+        run: cmake --preset release-headless -DIM_CPP_ENABLE_CLANG_TIDY=OFF
+
+      - name: Build Headless Release
+        run: cmake --build --preset release-headless --parallel 2
+
+      - name: Install Headless Release
+        run: cmake --install build/release-headless --prefix "$RUNNER_TEMP/release-headless"
+
+      - name: Test Headless Release
+        run: ctest --preset release-headless
+
+      - name: Generate headless DEB package
+        run: cpack --config build/release-headless/CPackConfig.cmake -G DEB -B build/packages/headless
+
+      - name: Upload headless DEB package
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: im-cpp-headless-deb
+          path: build/packages/headless/*.deb
+
+      - name: Generate GUI DEB package
+        run: cpack --config build/release-gui/CPackConfig.cmake -G DEB -B build/packages/gui
+
+      - name: Upload GUI DEB package
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: im-cpp-gui-deb
+          path: build/packages/gui/*.deb
+
+
+      - name: Configure headless GCC
+        run: cmake -S . -B build/headless -G Ninja -DCMAKE_CXX_COMPILER=g++-14 -DCMAKE_BUILD_TYPE=Debug -DIM_CPP_BUILD_GUI=OFF -DIM_CPP_BUILD_TESTS=ON -DIM_CPP_ENABLE_CLANG_TIDY=OFF -DIM_CPP_ENABLE_COVERAGE=OFF
+
+      - name: Build headless GCC
+        run: cmake --build build/headless --parallel 2
+
+      - name: Test headless GCC
+        run: ctest --test-dir build/headless --output-on-failure
+
+      - name: Install headless package
+        run: cmake --install build/headless --prefix /opt/im-cpp
+        env:
+          DESTDIR: ${{ runner.temp }}/stage
+
+      - name: Configure package consumer
+        run: cmake -S tests/package-consumer -B build/package-consumer -G Ninja -DCMAKE_CXX_COMPILER=g++-14 -DCMAKE_PREFIX_PATH="$RUNNER_TEMP/stage/opt/im-cpp" -DCMAKE_CXX_FLAGS=-march=x86-64
+
+      - name: Build package consumer
+        run: cmake --build build/package-consumer
+
+      - name: Smoke-test executable
+        run: ./build/headless/im-cpp check
+
+      - name: Smoke-test installed executable
+        run: "$RUNNER_TEMP/stage/opt/im-cpp/bin/im-cpp" check
+
+      - name: Test installed package consumer
+        run: ./build/package-consumer/im_cpp_package_consumer
+
+      - name: Check C++ formatting
+        run: find src tests -type f \( -name '*.cpp' -o -name '*.h' \) -print0 | xargs -0 clang-format --dry-run --Werror
+
+      - name: Check CMake formatting
+        run: cmake-format --check CMakeLists.txt cmake/CompilerSettings.cmake cmake/GuiDependencies.cmake cmake/DependencyPins.cmake cmake/InstallRules.cmake cmake/im_cppConfig.cmake.in
+
+      - name: Check dependency installer syntax
+        run: bash -n scripts/install-build-dependencies.sh
