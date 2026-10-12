@@ -51,7 +51,7 @@ TEST_CASE("loadPreferences_Should_UseDefaultsWhenFileIsMissing")
 {
     const auto configDirectory = std::filesystem::temp_directory_path() / "im-cpp-pref-defaults";
     std::filesystem::remove_all(configDirectory);
-    const EnvironmentVariableGuard configDirectoryGuard("XDG_CONFIG_HOME", configDirectory);
+    EnvironmentVariableGuard configDirectoryGuard("XDG_CONFIG_HOME", configDirectory);
 
     const auto preferences = im_cpp::gui::loadPreferences();
 
@@ -64,7 +64,7 @@ TEST_CASE("savePreferences_Should_RoundTripSettings")
 {
     const auto configDirectory = std::filesystem::temp_directory_path() / "im-cpp-pref-roundtrip";
     std::filesystem::remove_all(configDirectory);
-    const EnvironmentVariableGuard configDirectoryGuard("XDG_CONFIG_HOME", configDirectory);
+    EnvironmentVariableGuard configDirectoryGuard("XDG_CONFIG_HOME", configDirectory);
     const im_cpp::gui::Preferences expected{.showLogPanel = true, .autoScroll = false};
 
     im_cpp::gui::savePreferences(expected);
