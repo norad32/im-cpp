@@ -1,47 +1,87 @@
 {
-    "version": "2.0.0",
-    "tasks": [
-        {
-            "label": "Install build dependencies",
-            "type": "shell",
-            "command": "${workspaceFolder}/scripts/install-build-dependencies.sh",
-            "options": {
-                "cwd": "${workspaceFolder}",
-                "env": {
-                    "PATH": "${env:HOME}/.local/bin:${env:PATH}"
-                }
-            },
-            "problemMatcher": []
-        },
-        {
-            "label": "Build and test Debug",
-            "type": "shell",
-            "command": "cmake --preset debug -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON && cmake --build --preset debug && ctest --preset debug",
-            "options": {
-                "cwd": "${workspaceFolder}"
-            },
-            "group": "build",
-            "problemMatcher": ["$gcc"]
-        },
-        {
-            "label": "Build and test Release (GUI)",
-            "type": "shell",
-            "command": "cmake --preset release-gui -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON && cmake --build --preset release-gui && ctest --preset release-gui",
-            "options": {
-                "cwd": "${workspaceFolder}"
-            },
-            "group": "build",
-            "problemMatcher": ["$gcc"]
-        },
-        {
-            "label": "Build and test Release (Headless)",
-            "type": "shell",
-            "command": "cmake --preset release-headless -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON && cmake --build --preset release-headless && ctest --preset release-headless",
-            "options": {
-                "cwd": "${workspaceFolder}"
-            },
-            "group": "build",
-            "problemMatcher": ["$gcc"]
+  "version": "2.0.0",
+  "inputs": [
+    {
+      "id": "buildType",
+      "type": "pickString",
+      "description": "Select build type",
+      "options": ["debug", "release", "all"],
+      "default": "debug"
+    },
+    {
+      "id": "buildTarget",
+      "type": "pickString",
+      "description": "Select build target",
+      "options": ["gui", "headless", "all"],
+      "default": "gui"
+    }
+  ],
+  "tasks": [
+    {
+      "label": "Install build dependencies",
+      "type": "shell",
+      "command": "${workspaceFolder}/scripts/install-build-dependencies.sh",
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PATH": "${env:HOME}/.local/bin:${env:PATH}"
         }
-    ]
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Build",
+      "type": "shell",
+      "command": "build_type=\"${input:buildType}\"; build_target=\"${input:buildTarget}\"; build_types=(debug release); build_targets=(gui headless); if [[ \"$build_type\" != all ]]; then build_types=(\"$build_type\"); fi; if [[ \"$build_target\" != all ]]; then build_targets=(\"$build_target\"); fi; for type in \"${build_types[@]}\"; do for target in \"${build_targets[@]}\"; do preset=\"${type}-${target}\"; cmake --preset \"$preset\" && cmake --build --preset \"$preset\" || exit $?; done; done",
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "shell": {
+          "executable": "/bin/bash",
+          "args": ["-c"]
+        }
+      },
+      "group": "build",
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "Clean",
+      "type": "shell",
+      "command": "build_type=\"${input:buildType}\"; build_target=\"${input:buildTarget}\"; build_types=(debug release); build_targets=(gui headless); if [[ \"$build_type\" != all ]]; then build_types=(\"$build_type\"); fi; if [[ \"$build_target\" != all ]]; then build_targets=(\"$build_target\"); fi; for type in \"${build_types[@]}\"; do for target in \"${build_targets[@]}\"; do build_dir=\"build/${type}-${target}\"; if [[ -d \"$build_dir\" ]]; then cmake -E rm -rf \"$build_dir\" || exit $?; fi; done; done",
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "shell": {
+          "executable": "/bin/bash",
+          "args": ["-c"]
+        }
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Build Debug GUI for Launch",
+      "type": "shell",
+      "command": "cmake --preset debug-gui && cmake --build --preset debug-gui",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "Build Debug Headless for Launch",
+      "type": "shell",
+      "command": "cmake --preset debug-headless && cmake --build --preset debug-headless",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "Test Debug GUI",
+      "type": "shell",
+      "command": "ctest --preset debug-gui",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    }
+  ]
 }

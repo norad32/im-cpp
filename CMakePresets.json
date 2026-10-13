@@ -13,7 +13,28 @@
         "ENABLE_COVERAGE": "ON",
         "BUILD_TESTS": "ON",
         "BUILD_GUI": "ON",
-        "ENABLE_CLANG_TIDY": "ON"
+        "ENABLE_CLANG_TIDY": "ON",
+        "BUILD_GUI_RUNTIME": "OFF"
+      }
+    },
+    {
+      "name": "debug-gui",
+      "displayName": "Debug GUI (Ninja)",
+      "inherits": "debug",
+      "binaryDir": "${sourceDir}/build/debug-gui",
+      "cacheVariables": {
+        "BUILD_GUI": "ON",
+        "BUILD_GUI_RUNTIME": "OFF"
+      }
+    },
+    {
+      "name": "debug-headless",
+      "displayName": "Debug Headless (Ninja)",
+      "inherits": "debug",
+      "binaryDir": "${sourceDir}/build/debug-headless",
+      "cacheVariables": {
+        "BUILD_GUI": "OFF",
+        "BUILD_GUI_RUNTIME": "OFF"
       }
     },
     {
@@ -59,6 +80,14 @@
       "configurePreset": "debug"
     },
     {
+      "name": "debug-gui",
+      "configurePreset": "debug-gui"
+    },
+    {
+      "name": "debug-headless",
+      "configurePreset": "debug-headless"
+    },
+    {
       "name": "release-gui",
       "configurePreset": "release-gui"
     },
@@ -71,6 +100,20 @@
     {
       "name": "debug",
       "configurePreset": "debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "debug-gui",
+      "configurePreset": "debug-gui",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "debug-headless",
+      "configurePreset": "debug-headless",
       "output": {
         "outputOnFailure": true
       }
