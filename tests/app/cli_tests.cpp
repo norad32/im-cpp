@@ -2,8 +2,10 @@
 #include "core/logger.h"
 #include <catch2/catch_test_macros.hpp>
 #include <filesystem>
+#include <fstream>
 #include <memory>
 #include <sstream>
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -21,7 +23,10 @@ TEST_CASE("runCli_Should_PrintCheckResult")
     REQUIRE(result == 0);
     REQUIRE(output.str() == "I'm C++ OK\n");
     REQUIRE(error.str().empty());
-    REQUIRE(std::filesystem::exists(log_directory / "im-cpp-cli-test.log"));
+    std::ifstream logFile(log_directory / "im-cpp-cli-test.log");
+    const std::string logContents((std::istreambuf_iterator<char>(logFile)), std::istreambuf_iterator<char>());
+    REQUIRE(logContents.contains("Application started"));
+    REQUIRE(logContents.contains("Application closed"));
     std::filesystem::remove_all(log_directory);
 }
 
@@ -64,6 +69,39 @@ TEST_CASE("runCli_Should_InvokeGuiRunnerWhenGuiCommandIsSelected")
     REQUIRE(result == 7);
     REQUIRE(gui_was_run);
     REQUIRE(error.str().empty());
+    std::ifstream logFile(log_directory / "im-cpp-cli-gui-test.log");
+    const std::string logContents((std::istreambuf_iterator<char>(logFile)), std::istreambuf_iterator<char>());
+    REQUIRE(logContents.contains("Application started"));
+    REQUIRE(logContents.contains("Application closed"));
+    std::filesystem::remove_all(log_directory);
+}
+
+TEST_CASE("runCli_Should_LogGuiRunnerException")
+{
+    const auto log_directory = std::filesystem::temp_directory_path() / "im-cpp-cli-gui-exception-tests";
+    std::filesystem::remove_all(log_directory);
+    const std::vector<std::string_view> arguments{"gui"};
+    std::ostringstream output;
+    std::ostringstream error;
+    im_cpp::core::Logger logger("im-cpp-cli-gui-exception-test");
+
+    const int result = im_cpp::app::runCli(arguments,
+                                           output,
+                                           error,
+                                           logger,
+                                           log_directory,
+                                           [](std::shared_ptr<spdlog::logger>, std::shared_ptr<im_cpp::core::GuiLogSink>) -> int
+                                           { throw std::runtime_error("GUI failure"); });
+
+    std::ifstream logFile(log_directory / "im-cpp-cli-gui-exception-test.log");
+    const std::string logContents((std::istreambuf_iterator<char>(logFile)), std::istreambuf_iterator<char>());
+    REQUIRE(result == 1);
+#ifdef IM_CPP_DEBUG_BUILD
+    REQUIRE(logContents.contains("[error] [im-cpp-cli-gui-exception-test] [135] Application failed: GUI failure"));
+#else
+    REQUIRE(logContents.contains("[error] [im-cpp-cli-gui-exception-test] Application failed: GUI failure"));
+#endif
+    REQUIRE(error.str() == "Application failed: GUI failure\n");
     std::filesystem::remove_all(log_directory);
 }
 

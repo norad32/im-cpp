@@ -2,6 +2,7 @@
 #include <cstddef>
 #include <fmt/format.h>
 #include <mutex>
+#include <spdlog/common.h>
 #include <spdlog/details/log_msg.h>
 #include <utility>
 #include <vector>
@@ -30,7 +31,9 @@ void GuiLogSink::clear()
 
 void GuiLogSink::sink_it_(const spdlog::details::log_msg & message)
 {
-    GuiLogEntry entry{.level = message.level, .message = fmt::to_string(message.payload)};
+    spdlog::memory_buf_t formattedMessage;
+    formatter_->format(message, formattedMessage);
+    GuiLogEntry entry{.level = message.level, .formattedMessage = fmt::to_string(formattedMessage)};
     if (capacity_ == 0)
     {
         return;

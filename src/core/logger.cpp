@@ -2,10 +2,14 @@
 #include "core/gui_log_sink.h"
 #include "core/log_level.h"
 #include <cstdlib>
+#include <ctime>
 #include <filesystem>
 #include <memory>
 #include <spdlog/common.h>
+#include <spdlog/details/fmt_helper.h>
+#include <spdlog/details/log_msg.h>
 #include <spdlog/logger.h>
+#include <spdlog/pattern_formatter.h>
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <stdexcept>
@@ -19,6 +23,47 @@ namespace
 
 constexpr std::size_t maxLogFileSize = std::size_t{1024} * std::size_t{1024};
 constexpr std::size_t maxRotatedLogFiles = std::size_t{3};
+
+class SourceOrLoggerFlagFormatter final : public spdlog::custom_flag_formatter
+{
+public:
+    [[nodiscard]] std::unique_ptr<spdlog::custom_flag_formatter> clone() const override
+    {
+        return std::make_unique<SourceOrLoggerFlagFormatter>();
+    }
+
+    void format(const spdlog::details::log_msg & message, const std::tm & time, spdlog::memory_buf_t & destination) override
+    {
+        static_cast<void>(time);
+        std::string_view value;
+        if (message.level <= spdlog::level::debug && !message.source.empty())
+        {
+            value = message.source.filename;
+            const std::size_t separator = value.find_last_of("/\\");
+            if (separator != std::string_view::npos)
+            {
+                value.remove_prefix(separator + 1);
+            }
+        }
+        else
+        {
+            value = std::string_view(message.logger_name.data(), message.logger_name.size());
+        }
+        spdlog::details::fmt_helper::append_string_view(value, destination);
+    }
+};
+
+[[nodiscard]] std::unique_ptr<spdlog::formatter> makeLogFormatter()
+{
+    auto formatter = std::make_unique<spdlog::pattern_formatter>();
+    formatter->add_flag<SourceOrLoggerFlagFormatter>('N');
+#ifdef IM_CPP_DEBUG_BUILD
+    formatter->set_pattern("%Y-%m-%d %H:%M:%S.%e [%l] [%N] [%#] %v");
+#else
+    formatter->set_pattern("%Y-%m-%d %H:%M:%S.%e [%l] [%N] %v");
+#endif
+    return formatter;
+}
 
 [[nodiscard]] spdlog::level::level_enum toSpdlogLevel(LogLevel level) noexcept
 {
@@ -38,6 +83,16 @@ constexpr std::size_t maxRotatedLogFiles = std::size_t{3};
             return spdlog::level::critical;
     }
     return spdlog::level::off;
+}
+
+[[nodiscard]] spdlog::level::level_enum configuredLevel(LogLevel level) noexcept
+{
+#ifdef RELEASE
+    const auto requestedLevel = toSpdlogLevel(level);
+    return requestedLevel < spdlog::level::info ? spdlog::level::info : requestedLevel;
+#else
+    return toSpdlogLevel(level);
+#endif
 }
 
 [[nodiscard]] std::filesystem::path defaultLogDirectory()
@@ -77,8 +132,11 @@ void Logger::setup(LogLevel level, const std::filesystem::path & logDirectory)
     }
 
     logger_ = std::make_shared<spdlog::logger>(name_, sinks.begin(), sinks.end());
-    logger_->set_level(toSpdlogLevel(level));
-    logger_->set_pattern("%Y-%m-%d %H:%M:%S.%e [%l] [%n] %v");
+    logger_->set_level(configuredLevel(level));
+    for (const auto & sink : logger_->sinks())
+    {
+        sink->set_formatter(makeLogFormatter());
+    }
     logger_->flush_on(spdlog::level::err);
 }
 
@@ -100,7 +158,7 @@ void Logger::setLevel(LogLevel level) noexcept
 {
     if (logger_)
     {
-        logger_->set_level(toSpdlogLevel(level));
+        logger_->set_level(configuredLevel(level));
     }
 }
 
@@ -113,6 +171,7 @@ std::shared_ptr<GuiLogSink> Logger::attachGuiSink()
     if (!guiSink_)
     {
         guiSink_ = std::make_shared<GuiLogSink>();
+        guiSink_->set_formatter(makeLogFormatter());
         logger_->sinks().push_back(guiSink_);
     }
     return guiSink_;

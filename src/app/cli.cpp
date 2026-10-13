@@ -15,6 +15,7 @@
 #include <ostream>
 #include <span>
 #include <spdlog/logger.h>
+#include <spdlog/spdlog.h>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -99,6 +100,8 @@ int runCli(std::span<const std::string_view> arguments,
     }
 
     logger.setup(*parsedLevel, logDirectory);
+    const auto activeLogger = logger.get();
+    SPDLOG_LOGGER_INFO(activeLogger, "Application started");
     if (runGuiCommand)
     {
         try
@@ -107,6 +110,7 @@ int runCli(std::span<const std::string_view> arguments,
 #if HAS_GUI
             if (!runGui)
             {
+                SPDLOG_LOGGER_ERROR(activeLogger, "GUI runner is unavailable in this build");
                 error << "GUI runner is unavailable in this build\n";
                 logger.shutdown();
                 return 1;
@@ -115,27 +119,28 @@ int runCli(std::span<const std::string_view> arguments,
 #else
             if (!runGui)
             {
+                SPDLOG_LOGGER_ERROR(activeLogger, "GUI support is unavailable in this build");
                 error << "GUI support is unavailable in this build\n";
                 logger.shutdown();
                 return 1;
             }
             const int result = runGui(logger.get(), logSink);
 #endif
+            SPDLOG_LOGGER_INFO(activeLogger, "Application closed");
             logger.shutdown();
             return result;
         }
         catch (const std::exception & exception)
         {
-            error << "GUI startup failed: " << exception.what() << '\n';
+            SPDLOG_LOGGER_ERROR(activeLogger, "Application failed: {}", exception.what());
+            error << "Application failed: " << exception.what() << '\n';
             logger.shutdown();
             return 1;
         }
     }
 
-    if (const auto activeLogger = logger.get())
-    {
-        activeLogger->info("I'm C++ OK");
-    }
+    SPDLOG_LOGGER_INFO(activeLogger, "I'm C++ OK");
+    SPDLOG_LOGGER_INFO(activeLogger, "Application closed");
     logger.shutdown();
     output << "I'm C++ OK\n";
     return 0;

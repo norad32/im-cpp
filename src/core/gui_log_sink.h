@@ -2,6 +2,7 @@
 
 #include <mutex>
 #include <spdlog/details/log_msg.h>
+#include <spdlog/formatter.h>
 #include <spdlog/sinks/base_sink.h>
 #include <string>
 #include <vector>
@@ -14,7 +15,7 @@ inline constexpr std::size_t defaultGuiLogCapacity = 1024;
 struct GuiLogEntry
 {
     spdlog::level::level_enum level;
-    std::string message;
+    std::string formattedMessage;
 };
 
 class GuiLogSink final : public spdlog::sinks::base_sink<std::mutex>

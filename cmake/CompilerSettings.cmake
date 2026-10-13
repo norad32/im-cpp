@@ -44,8 +44,13 @@ function(apply_common_compile_options target_name)
         $<$<CONFIG:Debug>:${DEBUGGING_OPTIONS}>
         $<$<CONFIG:Release>:${RELEASE_OPT_OPTIONS}>)
     target_compile_definitions(
-        ${target_name} ${scope} $<$<CONFIG:Release>:NDEBUG=1>
-                       $<$<CONFIG:Release>:RELEASE=1>)
+        ${target_name}
+        ${scope}
+        $<$<CONFIG:Debug>:IM_CPP_DEBUG_BUILD=1>
+        $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG>
+        $<$<CONFIG:Release>:SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_INFO>
+        $<$<CONFIG:Release>:NDEBUG=1>
+        $<$<CONFIG:Release>:RELEASE=1>)
 endfunction()
 
 function(apply_coverage_compile_options target_name)

@@ -13,6 +13,7 @@
 #include <memory>
 #include <spdlog/common.h>
 #include <spdlog/logger.h>
+#include <spdlog/spdlog.h>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -112,10 +113,15 @@ void drawMainWindow(spdlog::logger & logger, Preferences & preferences, bool & s
         ImGui::SameLine();
         if (ImGui::Button("Generate Test Logs"))
         {
-            logger.debug("Generated a debug message");
-            logger.info("Generated an information message");
-            logger.warn("Generated a warning message");
-            logger.error("Generated an error message");
+            logger.log(
+                spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION}, spdlog::level::debug, "Generated a debug message");
+            logger.log(spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION},
+                       spdlog::level::info,
+                       "Generated an information message");
+            logger.log(
+                spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION}, spdlog::level::warn, "Generated a warning message");
+            logger.log(
+                spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION}, spdlog::level::err, "Generated an error message");
         }
         ImGui::SameLine();
         if (ImGui::Button("Close"))
@@ -135,9 +141,8 @@ void drawLogEntries(const std::vector<core::GuiLogEntry> & entries,
     const bool wasAtBottom = ImGui::GetScrollY() >= ImGui::GetScrollMaxY();
     for (const auto & entry : entries)
     {
-        const auto levelText = spdlog::level::to_string_view(entry.level);
         ImGui::PushStyleColor(ImGuiCol_Text, levelColor(entry.level));
-        ImGui::TextWrapped("%.*s %s", static_cast<int>(levelText.size()), levelText.data(), entry.message.c_str());
+        ImGui::TextWrapped("%s", entry.formattedMessage.c_str());
         ImGui::PopStyleColor();
     }
     if (preferences.autoScroll && (newEntriesWereAdded || (followScroll && wasAtBottom)))
@@ -267,6 +272,7 @@ Application::Application(std::shared_ptr<spdlog::logger> logger, std::shared_ptr
 
 int Application::run()
 {
+    SPDLOG_LOGGER_DEBUG(logger_, "GUI starting");
     if (!initializeGlfw())
     {
         throw std::runtime_error("Failed to initialize GLFW");
@@ -313,6 +319,7 @@ int Application::run()
     ImGui::DestroyContext();
     glfwDestroyWindow(window);
     glfwTerminate();
+    SPDLOG_LOGGER_INFO(logger_, "GUI closed");
     return 0;
 }
 
