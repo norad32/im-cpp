@@ -3,20 +3,19 @@ include(CMakePackageConfigHelpers)
 install(
     TARGETS im_cpp_options im_core im_app
     EXPORT ${CMAKE_PACKAGE_NAME}Targets
-    ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+    ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT Development
     LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT Development)
 
 if(BUILD_GUI)
     install(
         TARGETS im_gui imgui
         EXPORT ${CMAKE_PACKAGE_NAME}Targets
-        ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+        ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT Development
         LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT Development)
 
     install(
         DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/src/gui/"
-        DESTINATION
-            "${CMAKE_INSTALL_INCLUDEDIR}/${CMAKE_PACKAGE_NAME}/gui"
+        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${CMAKE_PACKAGE_NAME}/gui"
         COMPONENT Development
         FILES_MATCHING
         PATTERN "*.h")
@@ -28,8 +27,7 @@ if(BUILD_GUI)
               "${imgui_SOURCE_DIR}/imstb_rectpack.h"
               "${imgui_SOURCE_DIR}/imstb_textedit.h"
               "${imgui_SOURCE_DIR}/imstb_truetype.h"
-        DESTINATION
-            "${CMAKE_INSTALL_INCLUDEDIR}/${CMAKE_PACKAGE_NAME}/imgui"
+        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${CMAKE_PACKAGE_NAME}/imgui"
         COMPONENT Development)
 
     install(
@@ -45,8 +43,8 @@ if(BUILD_GUI)
             "${CMAKE_INSTALL_DATADIR}/licenses/${CMAKE_PACKAGE_NAME}/imgui"
         COMPONENT Development)
 endif()
-install(TARGETS ${EXECUTABLE_NAME}
-        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT Runtime)
+install(TARGETS ${EXECUTABLE_NAME} RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+                                           COMPONENT Runtime)
 if(BUILD_GUI_RUNTIME)
     install(TARGETS ${GUI_EXECUTABLE_NAME}
             RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT Gui)
@@ -80,9 +78,8 @@ install(
     DESTINATION "${INSTALL_CMAKEDIR}"
     COMPONENT Development)
 install(
-    FILES
-        "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PACKAGE_NAME}Config.cmake"
-        "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PACKAGE_NAME}ConfigVersion.cmake"
+    FILES "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PACKAGE_NAME}Config.cmake"
+          "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PACKAGE_NAME}ConfigVersion.cmake"
     DESTINATION "${INSTALL_CMAKEDIR}"
     COMPONENT Development)
 

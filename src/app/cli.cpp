@@ -4,9 +4,7 @@
 #include "core/log_level.h"
 #include "core/logger.h"
 #include <CLI/CLI.hpp>
-#if !HAS_GUI
 #include <algorithm>
-#endif
 #include <exception>
 #include <filesystem>
 #include <functional>
@@ -37,17 +35,21 @@ namespace
     return cliArguments;
 }
 
-void configureApplication(CLI::App & application, std::string & logLevel, CLI::App *& checkCommand, CLI::App *& guiCommand)
+void configureApplication(CLI::App & application,
+                          std::string & logLevel,
+                          CLI::App *& checkCommand,
+                          CLI::App *& guiCommand,
+                          std::vector<CLI::Option *> & logLevelOptions)
 {
     application.set_help_flag("-h,--help");
     application.set_version_flag("-V,--version",
                                  std::string(core::applicationName()) + " " + std::string(core::applicationVersion()));
-    application.add_option("--log-level,-l", logLevel, "Set the logging level");
+    logLevelOptions.push_back(application.add_option("--log-level,-l", logLevel, "Set the logging level"));
 
     checkCommand = application.add_subcommand("check", "Run a logging check");
     guiCommand = application.add_subcommand("gui", "Launch the graphical interface");
-    checkCommand->add_option("--log-level,-l", logLevel, "Set the logging level");
-    guiCommand->add_option("--log-level,-l", logLevel, "Set the logging level");
+    logLevelOptions.push_back(checkCommand->add_option("--log-level,-l", logLevel, "Set the logging level"));
+    logLevelOptions.push_back(guiCommand->add_option("--log-level,-l", logLevel, "Set the logging level"));
 }
 
 [[nodiscard]] int
@@ -71,7 +73,8 @@ int runCli(std::span<const std::string_view> arguments,
     CLI::App application{"", std::string(core::applicationName())};
     CLI::App * checkCommand = nullptr;
     CLI::App * guiCommand = nullptr;
-    configureApplication(application, logLevelValue, checkCommand, guiCommand);
+    std::vector<CLI::Option *> logLevelOptions;
+    configureApplication(application, logLevelValue, checkCommand, guiCommand, logLevelOptions);
 
     try
     {
@@ -84,13 +87,6 @@ int runCli(std::span<const std::string_view> arguments,
         return reportParseError(application, exception, output, error);
     }
 
-    const std::optional<core::LogLevel> parsedLevel = core::parseLogLevel(logLevelValue);
-    if (!parsedLevel)
-    {
-        error << "Invalid log level: " << logLevelValue << '\n';
-        return 2;
-    }
-
     const bool runCheck = checkCommand->parsed();
     const bool runGuiCommand = guiCommand->parsed() || (!runCheck && arguments.empty());
     if (!runCheck && !runGuiCommand)
@@ -98,8 +94,27 @@ int runCli(std::span<const std::string_view> arguments,
         error << "Exactly one of the commands 'check' or 'gui' is required\n";
         return 2;
     }
+    if (runGuiCommand && !std::ranges::any_of(logLevelOptions, [](const CLI::Option * option) { return option->count() > 0; }))
+    {
+        logLevelValue = "DEBUG";
+    }
 
-    logger.setup(*parsedLevel, logDirectory);
+    const std::optional<core::LogLevel> parsedLevel = core::parseLogLevel(logLevelValue);
+    if (!parsedLevel)
+    {
+        error << "Invalid log level: " << logLevelValue << '\n';
+        return 2;
+    }
+
+    try
+    {
+        logger.setup(*parsedLevel, logDirectory);
+    }
+    catch (const std::exception & exception)
+    {
+        error << "Logger setup failed: " << exception.what() << '\n';
+        return 1;
+    }
     const auto activeLogger = logger.get();
     SPDLOG_LOGGER_INFO(activeLogger, "Application started");
     if (runGuiCommand)
@@ -107,16 +122,6 @@ int runCli(std::span<const std::string_view> arguments,
         try
         {
             const auto logSink = logger.attachGuiSink();
-#if HAS_GUI
-            if (!runGui)
-            {
-                SPDLOG_LOGGER_ERROR(activeLogger, "GUI runner is unavailable in this build");
-                error << "GUI runner is unavailable in this build\n";
-                logger.shutdown();
-                return 1;
-            }
-            const int result = runGui(logger.get(), logSink);
-#else
             if (!runGui)
             {
                 SPDLOG_LOGGER_ERROR(activeLogger, "GUI support is unavailable in this build");
@@ -125,7 +130,6 @@ int runCli(std::span<const std::string_view> arguments,
                 return 1;
             }
             const int result = runGui(logger.get(), logSink);
-#endif
             SPDLOG_LOGGER_INFO(activeLogger, "Application closed");
             logger.shutdown();
             return result;

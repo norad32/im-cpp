@@ -74,18 +74,112 @@ constexpr std::size_t maxDisplayedEntries = core::defaultGuiLogCapacity;
     }
 }
 
-[[nodiscard]] bool initializeGlfw()
+class GlfwSession
 {
-    if (glfwInit() == GLFW_FALSE)
+public:
+    GlfwSession(const GlfwSession &) = delete;
+    GlfwSession & operator=(const GlfwSession &) = delete;
+    GlfwSession(GlfwSession &&) = delete;
+    GlfwSession & operator=(GlfwSession &&) = delete;
+
+    GlfwSession()
     {
-        return false;
+        if (glfwInit() == GLFW_FALSE)
+        {
+            throw std::runtime_error("Failed to initialize GLFW");
+        }
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
     }
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
-    return true;
-}
+
+    ~GlfwSession() { glfwTerminate(); }
+};
+
+struct WindowDeleter
+{
+    void operator()(GLFWwindow * window) const noexcept
+    {
+        if (window != nullptr)
+        {
+            glfwDestroyWindow(window);
+        }
+    }
+};
+
+class ImGuiContext
+{
+public:
+    ImGuiContext()
+    {
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+    }
+
+    ~ImGuiContext() { ImGui::DestroyContext(); }
+
+    ImGuiContext(const ImGuiContext &) = delete;
+    ImGuiContext & operator=(const ImGuiContext &) = delete;
+    ImGuiContext(ImGuiContext &&) = delete;
+    ImGuiContext & operator=(ImGuiContext &&) = delete;
+};
+
+class GlfwBackend
+{
+public:
+    explicit GlfwBackend(GLFWwindow * window) : initialized_(ImGui_ImplGlfw_InitForOpenGL(window, true))
+    {
+        if (!initialized_)
+        {
+            throw std::runtime_error("Failed to initialize ImGui GLFW backend");
+        }
+    }
+
+    ~GlfwBackend()
+    {
+        if (initialized_)
+        {
+            ImGui_ImplGlfw_Shutdown();
+        }
+    }
+
+    GlfwBackend(const GlfwBackend &) = delete;
+    GlfwBackend & operator=(const GlfwBackend &) = delete;
+    GlfwBackend(GlfwBackend &&) = delete;
+    GlfwBackend & operator=(GlfwBackend &&) = delete;
+
+private:
+    bool initialized_ = false;
+};
+
+class OpenGLBackend
+{
+public:
+    OpenGLBackend() : initialized_(ImGui_ImplOpenGL3_Init("#version 330"))
+    {
+        if (!initialized_)
+        {
+            throw std::runtime_error("Failed to initialize ImGui OpenGL backend");
+        }
+    }
+
+    ~OpenGLBackend()
+    {
+        if (initialized_)
+        {
+            ImGui_ImplOpenGL3_Shutdown();
+        }
+    }
+
+    OpenGLBackend(const OpenGLBackend &) = delete;
+    OpenGLBackend & operator=(const OpenGLBackend &) = delete;
+    OpenGLBackend(OpenGLBackend &&) = delete;
+    OpenGLBackend & operator=(OpenGLBackend &&) = delete;
+
+private:
+    bool initialized_ = false;
+};
 
 void appendEntries(std::vector<core::GuiLogEntry> & entries, const std::vector<core::GuiLogEntry> & newEntries)
 {
@@ -273,52 +367,30 @@ Application::Application(std::shared_ptr<spdlog::logger> logger, std::shared_ptr
 int Application::run()
 {
     SPDLOG_LOGGER_DEBUG(logger_, "GUI starting");
-    if (!initializeGlfw())
+    const GlfwSession glfwSession;
+    const std::unique_ptr<GLFWwindow, WindowDeleter> window{
+        glfwCreateWindow(initialApplicationWindowWidth, initialApplicationWindowHeight, "im-cpp", nullptr, nullptr)};
+    if (!window)
     {
-        throw std::runtime_error("Failed to initialize GLFW");
-    }
-
-    GLFWwindow * window =
-        glfwCreateWindow(initialApplicationWindowWidth, initialApplicationWindowHeight, "im-cpp", nullptr, nullptr);
-    if (window == nullptr)
-    {
-        glfwTerminate();
         throw std::runtime_error("Failed to create GUI window");
     }
 
-    glfwMakeContextCurrent(window);
+    glfwMakeContextCurrent(window.get());
     glfwSwapInterval(1);
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
+    const ImGuiContext guiContext;
     ImGui::StyleColorsDark();
-    const bool glfwBackendInitialized = ImGui_ImplGlfw_InitForOpenGL(window, true);
-    const bool openglBackendInitialized = glfwBackendInitialized && ImGui_ImplOpenGL3_Init("#version 330");
-    if (!openglBackendInitialized)
-    {
-        if (glfwBackendInitialized)
-        {
-            ImGui_ImplGlfw_Shutdown();
-        }
-        ImGui::DestroyContext();
-        glfwDestroyWindow(window);
-        glfwTerminate();
-        throw std::runtime_error("Failed to initialize ImGui backends");
-    }
+    const GlfwBackend glfwBackend(window.get());
+    const OpenGLBackend openGLBackend;
 
     ImGui::GetIO().IniFilename = nullptr;
     std::vector<core::GuiLogEntry> entries;
     bool followScroll = true;
-    while (glfwWindowShouldClose(window) == GLFW_FALSE && !shouldClose_)
+    while (glfwWindowShouldClose(window.get()) == GLFW_FALSE && !shouldClose_)
     {
         glfwPollEvents();
-        drawFrame(window, *logger_, *logSink_, preferences_, shouldClose_, entries, followScroll);
+        drawFrame(window.get(), *logger_, *logSink_, preferences_, shouldClose_, entries, followScroll);
     }
 
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
-    glfwDestroyWindow(window);
-    glfwTerminate();
     SPDLOG_LOGGER_INFO(logger_, "GUI closed");
     return 0;
 }

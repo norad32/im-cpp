@@ -16,13 +16,13 @@ jobs:
       - name: Install build and formatting dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential clang-format clang-tidy debhelper dh-cmake gcovr libglfw3-dev libgl1-mesa-dev ninja-build pkg-config pipx python3-venv
+          sudo apt-get install -y build-essential g++-14 clang-format clang-tidy debhelper dh-cmake gcovr libglfw3-dev libgl1-mesa-dev ninja-build pkg-config pipx python3-venv
           pipx install cmakelang==0.6.13
           pipx inject cmakelang pyyaml==6.0.2
           printf '%s\n' "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Configure Debug
-        run: cmake --preset debug -DENABLE_CLANG_TIDY=ON -DENABLE_COVERAGE=ON
+        run: cmake --preset debug -DCMAKE_CXX_COMPILER=g++-14 -DENABLE_CLANG_TIDY=ON -DENABLE_COVERAGE=ON
 
       - name: Build Debug
         run: cmake --build --preset debug --parallel 2
@@ -40,7 +40,7 @@ jobs:
           path: build/debug/coverage.xml
 
       - name: Configure GUI Release
-        run: cmake --preset release-gui -DENABLE_CLANG_TIDY=OFF
+        run: cmake --preset release-gui -DCMAKE_CXX_COMPILER=g++-14 -DENABLE_CLANG_TIDY=OFF
 
       - name: Build GUI Release
         run: cmake --build --preset release-gui --parallel 2
@@ -52,7 +52,7 @@ jobs:
         run: ctest --preset release-gui
 
       - name: Configure Headless Release
-        run: cmake --preset release-headless -DENABLE_CLANG_TIDY=OFF
+        run: cmake --preset release-headless -DCMAKE_CXX_COMPILER=g++-14 -DENABLE_CLANG_TIDY=OFF
 
       - name: Build Headless Release
         run: cmake --build --preset release-headless --parallel 2
@@ -115,7 +115,7 @@ jobs:
         run: find src tests -type f \( -name '*.cpp' -o -name '*.h' \) -print0 | xargs -0 clang-format --dry-run --Werror
 
       - name: Check CMake formatting
-        run: cmake-format --check CMakeLists.txt cmake/CompilerSettings.cmake cmake/GuiDependencies.cmake cmake/DependencyPins.cmake cmake/InstallRules.cmake cmake/im_cppConfig.cmake.in
+        run: cmake-format --check CMakeLists.txt cmake/CompilerSettings.cmake cmake/GuiDependencies.cmake cmake/DependencyPins.cmake cmake/InstallRules.cmake cmake/applicationConfig.cmake.in
 
       - name: Check dependency installer syntax
         run: bash -n scripts/install-build-dependencies.sh

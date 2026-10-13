@@ -25,25 +25,21 @@ if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS MINIMUM_GCC_VERSION)
     )
 endif()
 
-option(ENABLE_CLANG_TIDY
-       "Run clang-tidy during compilation when available" OFF)
+option(ENABLE_CLANG_TIDY "Run clang-tidy during compilation when available" OFF)
 option(BUILD_TESTS "Build and register unit tests" ON)
-option(ENABLE_COVERAGE "Instrument project code for Debug gcovr reports"
-       OFF)
+option(ENABLE_COVERAGE "Instrument project code for Debug gcovr reports" OFF)
 option(BUILD_GUI "Build the ImGui GLFW/OpenGL desktop GUI" ON)
-option(BUILD_GUI_RUNTIME
-       "Build the separately packaged GUI runtime executable" OFF)
+option(BUILD_GUI_RUNTIME "Build the separately packaged GUI runtime executable"
+       OFF)
 if(BUILD_GUI_RUNTIME AND NOT BUILD_GUI)
 
-    message(
-        FATAL_ERROR "BUILD_GUI_RUNTIME requires BUILD_GUI=ON.")
+    message(FATAL_ERROR "BUILD_GUI_RUNTIME requires BUILD_GUI=ON.")
 endif()
 set(PACKAGE_NAME
     "${DISTRIBUTION_NAME}"
     CACHE STRING "CPack package name")
-set_property(
-    CACHE PACKAGE_NAME PROPERTY STRINGS "${DISTRIBUTION_NAME}"
-                                       "${DISTRIBUTION_NAME}-gui")
+set_property(CACHE PACKAGE_NAME PROPERTY STRINGS "${DISTRIBUTION_NAME}"
+                                         "${DISTRIBUTION_NAME}-gui")
 set(CMAKE_CXX_STANDARD 23)
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -53,8 +49,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(GNUInstallDirs)
 include(CompilerSettings)
 include(DependencyPins)
-set(INSTALL_CMAKEDIR
-    "${CMAKE_INSTALL_LIBDIR}/cmake/${CMAKE_PACKAGE_NAME}")
+set(INSTALL_CMAKEDIR "${CMAKE_INSTALL_LIBDIR}/cmake/${CMAKE_PACKAGE_NAME}")
 set(GENERATED_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
 set(GENERATED_METADATA_HEADER
     "${GENERATED_INCLUDE_DIR}/core/application_metadata.h")
@@ -71,8 +66,7 @@ target_include_directories(
     INTERFACE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
         $<BUILD_INTERFACE:${GENERATED_INCLUDE_DIR}>
-        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${CMAKE_PACKAGE_NAME}>
-)
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${CMAKE_PACKAGE_NAME}>)
 
 find_package(
     spdlog
@@ -133,8 +127,7 @@ target_include_directories(
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
         $<BUILD_INTERFACE:${GENERATED_INCLUDE_DIR}>
-        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${CMAKE_PACKAGE_NAME}>
-)
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${CMAKE_PACKAGE_NAME}>)
 target_link_libraries(im_app PUBLIC im_core im_cpp_options)
 if(ENABLE_COVERAGE)
     target_link_options(
@@ -203,7 +196,6 @@ if(BUILD_GUI)
                im_core
                im_cpp_options)
     target_sources(im_gui PRIVATE src/gui/preferences.cpp)
-    target_link_libraries(im_app PUBLIC im_gui)
     target_link_libraries(${EXECUTABLE_NAME} PRIVATE im_gui)
     if(BUILD_GUI_RUNTIME)
         add_executable(${GUI_EXECUTABLE_NAME} src/gui_main.cpp)
@@ -213,15 +205,11 @@ if(BUILD_GUI)
                     im_cpp_options
                     im_gui
                     CLI11::CLI11)
-        target_compile_definitions(${GUI_EXECUTABLE_NAME}
-                                   PRIVATE HAS_GUI=1)
+        target_compile_definitions(${GUI_EXECUTABLE_NAME} PRIVATE HAS_GUI=1)
     endif()
-    target_compile_definitions(${EXECUTABLE_NAME}
-                               PRIVATE HAS_GUI=1)
+    target_compile_definitions(${EXECUTABLE_NAME} PRIVATE HAS_GUI=1)
 else()
-    target_compile_definitions(im_app PUBLIC HAS_GUI=0)
-    target_compile_definitions(${EXECUTABLE_NAME}
-                               PRIVATE HAS_GUI=0)
+    target_compile_definitions(${EXECUTABLE_NAME} PRIVATE HAS_GUI=0)
 endif()
 
 set(im_cpp_compile_targets
@@ -287,8 +275,7 @@ if(BUILD_TESTS)
     if(BUILD_GUI)
         target_link_libraries(im_cpp_tests PRIVATE im_gui)
         if(INSTALL_GUI)
-            target_link_libraries(im_cpp_tests
-                                  PRIVATE ${GUI_EXECUTABLE_NAME})
+            target_link_libraries(im_cpp_tests PRIVATE ${GUI_EXECUTABLE_NAME})
         endif()
     endif()
     apply_unit_test_compile_options(im_cpp_tests)
@@ -310,11 +297,10 @@ if(BUILD_TESTS)
     endif()
     catch_discover_tests(im_cpp_tests)
     add_test(NAME im_cpp_cli_check COMMAND ${EXECUTABLE_NAME} check)
-    add_test(NAME im_cpp_cli_version COMMAND ${EXECUTABLE_NAME}
-                                             --version)
+    add_test(NAME im_cpp_cli_version COMMAND ${EXECUTABLE_NAME} --version)
     if(BUILD_GUI_RUNTIME)
-        add_test(NAME im_cpp_gui_cli_version
-                 COMMAND ${GUI_EXECUTABLE_NAME} --version)
+        add_test(NAME im_cpp_gui_cli_version COMMAND ${GUI_EXECUTABLE_NAME}
+                                                     --version)
     endif()
 endif()
 
@@ -328,8 +314,7 @@ if(ENABLE_CLANG_TIDY)
         set_target_properties(
             ${target}
             PROPERTIES CXX_CLANG_TIDY
-                       "${CLANG_TIDY_EXECUTABLE};--warnings-as-errors=-*"
-        )
+                       "${CLANG_TIDY_EXECUTABLE};--warnings-as-errors=-*")
     endforeach()
 endif()
 
