@@ -82,6 +82,15 @@
         "cwd": "${workspaceFolder}"
       },
       "problemMatcher": []
+    },
+    {
+      "label": "Format CMake",
+      "type": "shell",
+      "command": "${workspaceFolder}/scripts/format-cmake.sh",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
     }
   ]
 }
