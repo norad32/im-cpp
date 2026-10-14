@@ -41,7 +41,7 @@ Build and test any preset with `cmake --build --preset <preset>` and `ctest --pr
 
 ## Dependencies
 
-CMake uses matching installed versions of spdlog and CLI11 when available, and otherwise fetches pinned revisions. Dear ImGui is fetched for GUI builds. Catch2 is an installed dependency when tests are enabled. GUI builds also require system GLFW and OpenGL development packages.
+CMake uses installed spdlog 1.12.0 or newer and CLI11 2.4.2 when available, and otherwise fetches pinned revisions. Installed package consumers require spdlog 1.12.0 or newer. Dear ImGui is fetched for GUI builds. Catch2 is an installed dependency when tests are enabled. GUI builds also require system GLFW and OpenGL development packages.
 
 ## Run
 

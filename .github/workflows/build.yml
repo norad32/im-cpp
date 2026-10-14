@@ -22,7 +22,7 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential catch2 g++-14 libglfw3-dev libgl1-mesa-dev ninja-build pkg-config
+          sudo apt-get install -y build-essential catch2 g++-14 libglfw3-dev libgl1-mesa-dev libspdlog-dev ninja-build pkg-config
 
       - name: Configure
         run: cmake --preset "${{ matrix.preset }}" -DCMAKE_CXX_COMPILER=g++-14
@@ -46,7 +46,7 @@ jobs:
       - name: Install coverage dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential catch2 g++-14 gcovr libglfw3-dev libgl1-mesa-dev ninja-build pkg-config
+          sudo apt-get install -y build-essential catch2 g++-14 gcovr libglfw3-dev libgl1-mesa-dev libspdlog-dev ninja-build pkg-config
 
       - name: Configure coverage build
         run: cmake --preset debug -DCMAKE_CXX_COMPILER=g++-14 -DENABLE_CLANG_TIDY=OFF

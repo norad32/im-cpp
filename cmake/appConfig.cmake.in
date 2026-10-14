@@ -3,11 +3,7 @@
 set(_PACKAGE_NAME "@CMAKE_PACKAGE_NAME@")
 
 include(CMakeFindDependencyMacro)
-find_dependency(
-    spdlog
-    @SPDLOG_PACKAGE_VERSION@
-    EXACT
-    CONFIG)
+find_dependency(spdlog @SPDLOG_MINIMUM_VERSION@ CONFIG)
 set(${_PACKAGE_NAME}_app_FOUND TRUE)
 set(${_PACKAGE_NAME}_development_FOUND TRUE)
 if(@BUILD_GUI@)

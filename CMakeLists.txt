@@ -79,8 +79,7 @@ target_include_directories(
 
 find_package(
     spdlog
-    ${SPDLOG_PACKAGE_VERSION}
-    EXACT
+    ${SPDLOG_MINIMUM_VERSION}
     CONFIG
     QUIET)
 if(NOT spdlog_FOUND)

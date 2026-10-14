@@ -36,6 +36,7 @@ build() {
 
 package_@ARCH_RUNTIME_PACKAGE_NAME@() {
     pkgdesc='@RUNTIME_PACKAGE_DESCRIPTION@'
+    depends=(@ARCH_RUNTIME_PACKAGE_DEPENDENCIES@)
     DESTDIR="${pkgdir}" cmake --install "${srcdir}/build-headless" --prefix /usr --component Runtime
     install -Dm644 "${srcdir}/@DISTRIBUTION_NAME@-${pkgver}/LICENSE" "${pkgdir}/usr/share/licenses/@ARCH_RUNTIME_PACKAGE_NAME@/LICENSE"
 }
