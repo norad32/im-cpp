@@ -1,6 +1,7 @@
 # im-cpp
 
 [![Build and test](https://github.com/norad32/im-cpp/actions/workflows/build.yml/badge.svg)](https://github.com/norad32/im-cpp/actions/workflows/build.yml)
+[![Release](https://github.com/norad32/im-cpp/actions/workflows/release.yml/badge.svg)](https://github.com/norad32/im-cpp/actions/workflows/release.yml)
 
 A Linux C++23 starter application with a command-line interface and optional Dear ImGui desktop GUI. The project currently requires GCC 14 or newer.
 
@@ -37,7 +38,7 @@ Compiler selection is cached by CMake. Use a fresh build directory if you change
 | `release-gui` | Release build with GUI support and a separate `im-cpp-gui` executable |
 | `release-headless` | Release build without GUI |
 
-Build and test any preset with `cmake --build --preset <preset>` and `ctest --preset <preset>`. Direct CMake configuration defaults to `BUILD_TESTS=OFF`; presets enable tests. Other options include `BUILD_GUI`, `BUILD_GUI_RUNTIME`, `INSTALL_GUI`, `ENABLE_COVERAGE`, and `ENABLE_CLANG_TIDY`. Pass `-DENABLE_CLANG_TIDY=OFF` when configuring a debug preset if clang-tidy is unavailable.
+Build and test any preset with `cmake --build --preset <preset>` and `ctest --preset <preset>`. Direct CMake configuration defaults to `BUILD_TESTS=OFF`, while presets enable tests. Other options include `BUILD_GUI`, `BUILD_GUI_RUNTIME`, `INSTALL_GUI`, `ENABLE_COVERAGE`, and `ENABLE_CLANG_TIDY`. Pass `-DENABLE_CLANG_TIDY=OFF` when configuring a debug preset if clang-tidy is unavailable.
 
 ## Dependencies
 
@@ -47,7 +48,7 @@ CMake uses installed spdlog 1.12.0 or newer and CLI11 2.4.2 when available, and 
 
 The command-line executable supports `check` and `--version`. GUI-enabled builds can open the interface with `im-cpp gui` or by starting without a command. Release GUI builds also provide the standalone `im-cpp-gui` executable.
 
-Preferences are stored below an absolute `$XDG_CONFIG_HOME/im-cpp/`, falling back to `$HOME/.config/im-cpp/` when `XDG_CONFIG_HOME` is unset or relative. Logs use `$XDG_STATE_HOME/im-cpp/logs/` when `XDG_STATE_HOME` is absolute; otherwise they fall back to `$HOME/.local/state/im-cpp/logs/`.
+Preferences are stored below an absolute `$XDG_CONFIG_HOME/im-cpp/`, falling back to `$HOME/.config/im-cpp/` when `XDG_CONFIG_HOME` is unset or relative. Logs use `$XDG_STATE_HOME/im-cpp/logs/` when `XDG_STATE_HOME` is absolute. Otherwise they fall back to `$HOME/.local/state/im-cpp/logs/`.
 
 ## VS Code
 
@@ -61,7 +62,7 @@ Install locally with:
 cmake --install build/release-headless --prefix <install-prefix>
 ```
 
-The `Runtime` component installs the executable and the `Development` component installs headers, libraries, and CMake package files. CPack generates Debian component packages; release automation also stages Linux archives and Arch packages. Review generated package dependencies and published release assets before relying on them for deployment; the Arch release workflow still needs a tagged-run verification.
+The `Runtime` component installs the executable and the `Development` component installs headers, libraries, and CMake package files. CPack generates Debian component packages, while release automation also stages Linux archives and Arch packages. Review generated package dependencies and published release assets before relying on them for deployment. The Arch release workflow still needs a tagged-run verification.
 
 CMake consumers can request the exported application target:
 
