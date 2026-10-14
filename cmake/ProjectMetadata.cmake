@@ -37,10 +37,10 @@ set(DEBIAN_BUILD_DEPENDENCIES
 )
 set(DEBIAN_GUI_RUNTIME_DEPENDENCIES "libglfw3, libgl1")
 set(DEBIAN_GUI_PACKAGE_DEPENDENCIES
-    "${DEBIAN_RUNTIME_PACKAGE_NAME} (= \${binary:Version}), ${DEBIAN_GUI_RUNTIME_DEPENDENCIES}"
+    "${DEBIAN_RUNTIME_PACKAGE_NAME} (= \\\${binary:Version}), ${DEBIAN_GUI_RUNTIME_DEPENDENCIES}"
 )
 set(DEBIAN_DEVELOPMENT_PACKAGE_DEPENDENCIES
-    "\${misc:Depends}, ${DEBIAN_RUNTIME_PACKAGE_NAME} (= \${binary:Version}), ${DEBIAN_GUI_PACKAGE_NAME} (= \${binary:Version})"
+    "\\\${misc:Depends}, ${DEBIAN_RUNTIME_PACKAGE_NAME} (= \\\${binary:Version}), ${DEBIAN_GUI_PACKAGE_NAME} (= \\\${binary:Version})"
 )
 set(ARCH_BUILD_DEPENDENCIES
     "'cmake>=${MINIMUM_CMAKE_VERSION}' 'gcc>=${MINIMUM_GCC_VERSION}' 'ninja' 'pkgconf' 'glfw' 'mesa'"

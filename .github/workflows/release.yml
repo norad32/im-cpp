@@ -1,0 +1,151 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  build-release:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - name: Verify release tag matches project version
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          project_version="$(awk -F '"' '/set[(]PROJECT_VERSION/ {print $2}' cmake/ProjectMetadata.cmake)"
+          test "$RELEASE_TAG" = "v$project_version"
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential g++-14 libglfw3-dev libgl1-mesa-dev ninja-build pkg-config
+
+      - name: Configure headless Release
+        run: cmake --preset release-headless -DCMAKE_CXX_COMPILER=g++-14
+
+      - name: Build headless Release
+        run: cmake --build --preset release-headless --parallel 2
+
+      - name: Test headless Release
+        run: ctest --preset release-headless
+
+      - name: Configure GUI Release
+        run: cmake --preset release-gui -DCMAKE_CXX_COMPILER=g++-14
+
+      - name: Build GUI Release
+        run: cmake --build --preset release-gui --parallel 2
+
+      - name: Test GUI Release
+        run: ctest --preset release-gui
+
+      - name: Package Debian releases
+        run: |
+          mkdir -p dist "$RUNNER_TEMP/headless-deb" "$RUNNER_TEMP/gui-deb"
+          cpack --config build/release-headless/CPackConfig.cmake -G DEB -B "$RUNNER_TEMP/headless-deb"
+          cpack --config build/release-gui/CPackConfig.cmake -G DEB -B "$RUNNER_TEMP/gui-deb"
+          for package in "$RUNNER_TEMP"/headless-deb/*.deb; do mv "$package" "dist/headless-$(basename "$package")"; done
+          for package in "$RUNNER_TEMP"/gui-deb/*.deb; do mv "$package" "dist/gui-$(basename "$package")"; done
+
+      - name: Stage binary releases
+        env:
+          RELEASE_VERSION: ${{ github.ref_name }}
+        run: |
+          version="${RELEASE_VERSION#v}"
+          mkdir -p "$RUNNER_TEMP/stage/headless/usr" "$RUNNER_TEMP/stage/gui/usr" dist
+          cmake --install build/release-headless --prefix "$RUNNER_TEMP/stage/headless/usr" --component Runtime
+          cmake --install build/release-gui --prefix "$RUNNER_TEMP/stage/gui/usr" --component Runtime
+          cmake --install build/release-gui --prefix "$RUNNER_TEMP/stage/gui/usr" --component Gui
+          install -Dm644 LICENSE "$RUNNER_TEMP/stage/headless/usr/share/licenses/im-cpp/LICENSE"
+          install -Dm644 LICENSE "$RUNNER_TEMP/stage/gui/usr/share/licenses/im-cpp/LICENSE"
+          tar -C "$RUNNER_TEMP/stage/headless" -czf "dist/im-cpp-headless-${version}-linux-x86_64.tar.gz" usr
+          tar -C "$RUNNER_TEMP/stage/gui" -czf "dist/im-cpp-gui-${version}-linux-x86_64.tar.gz" usr
+
+      - name: Prepare Arch PKGBUILD
+        run: cp build/release-gui/packaging/arch/PKGBUILD "$RUNNER_TEMP/PKGBUILD"
+
+      - name: Upload Linux release assets
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: linux-release-assets
+          path: dist
+          if-no-files-found: error
+
+      - name: Upload Arch PKGBUILD
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: arch-pkgbuild
+          path: ${{ runner.temp }}/PKGBUILD
+          if-no-files-found: error
+
+  build-arch-packages:
+    needs: build-release
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Download generated PKGBUILD
+        uses: actions/download-artifact@v4.3.0
+        with:
+          name: arch-pkgbuild
+          path: ${{ runner.temp }}/arch-build
+
+      - name: Build Arch split packages
+        run: |
+          mkdir -p "$RUNNER_TEMP/arch-packages"
+          docker run --rm \\
+            -v "$RUNNER_TEMP/arch-build/PKGBUILD:/tmp/PKGBUILD:ro" \\
+            -v "$RUNNER_TEMP/arch-packages:/packages" \\
+            archlinux:latest bash -euxo pipefail -c '
+              pacman -Syu --noconfirm --needed base-devel cmake gcc ninja pkgconf glfw-x11 mesa
+              useradd --create-home builder
+              mkdir /build
+              cp /tmp/PKGBUILD /build/PKGBUILD
+              chown -R builder:builder /build
+              su builder -c "cd /build && makepkg --nodeps --cleanbuild --noconfirm"
+              cp /build/*.pkg.tar.zst /packages/
+            '
+
+      - name: Upload Arch packages
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: arch-release-assets
+          path: ${{ runner.temp }}/arch-packages/*.pkg.tar.zst
+          if-no-files-found: error
+
+
+  publish-release:
+    needs:
+      - build-release
+      - build-arch-packages
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Download Linux release assets
+        uses: actions/download-artifact@v4.3.0
+        with:
+          name: linux-release-assets
+          path: dist
+
+      - name: Download Arch packages
+        uses: actions/download-artifact@v4.3.0
+        with:
+          name: arch-release-assets
+          path: dist/arch
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$RELEASE_TAG" \
+            dist/*.tar.gz \
+            dist/headless-*.deb \
+            dist/gui-*.deb \
+            dist/arch/*.pkg.tar.zst \
+            --verify-tag \
+            --generate-notes

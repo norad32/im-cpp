@@ -19,8 +19,8 @@ target_include_directories(
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/src>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${CMAKE_PACKAGE_NAME}>
-        $<BUILD_INTERFACE:${imgui_SOURCE_DIR}>
-        $<BUILD_INTERFACE:${imgui_SOURCE_DIR}/backends>)
+        $<BUILD_INTERFACE:${IMGUI_SOURCE_DIR}>
+        $<BUILD_INTERFACE:${IMGUI_SOURCE_DIR}/backends>)
 target_link_libraries(
     gui
     PUBLIC imgui

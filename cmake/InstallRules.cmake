@@ -21,24 +21,24 @@ if(BUILD_GUI)
         PATTERN "*.h")
 
     install(
-        FILES "${imgui_SOURCE_DIR}/imgui.h"
-              "${imgui_SOURCE_DIR}/imconfig.h"
-              "${imgui_SOURCE_DIR}/imgui_internal.h"
-              "${imgui_SOURCE_DIR}/imstb_rectpack.h"
-              "${imgui_SOURCE_DIR}/imstb_textedit.h"
-              "${imgui_SOURCE_DIR}/imstb_truetype.h"
+        FILES "${IMGUI_SOURCE_DIR}/imgui.h"
+              "${IMGUI_SOURCE_DIR}/imconfig.h"
+              "${IMGUI_SOURCE_DIR}/imgui_internal.h"
+              "${IMGUI_SOURCE_DIR}/imstb_rectpack.h"
+              "${IMGUI_SOURCE_DIR}/imstb_textedit.h"
+              "${IMGUI_SOURCE_DIR}/imstb_truetype.h"
         DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${CMAKE_PACKAGE_NAME}/imgui"
         COMPONENT Development)
 
     install(
-        FILES "${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.h"
-              "${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.h"
+        FILES "${IMGUI_SOURCE_DIR}/backends/imgui_impl_glfw.h"
+              "${IMGUI_SOURCE_DIR}/backends/imgui_impl_opengl3.h"
         DESTINATION
             "${CMAKE_INSTALL_INCLUDEDIR}/${CMAKE_PACKAGE_NAME}/imgui/backends"
         COMPONENT Development)
 
     install(
-        FILES "${imgui_SOURCE_DIR}/LICENSE.txt"
+        FILES "${IMGUI_SOURCE_DIR}/LICENSE.txt"
         DESTINATION
             "${CMAKE_INSTALL_DATADIR}/licenses/${CMAKE_PACKAGE_NAME}/imgui"
         COMPONENT Development)

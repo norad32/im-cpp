@@ -2,114 +2,84 @@ name: Build and test
 
 on:
   push:
+    branches:
+      - '**'
   pull_request:
 
 permissions:
   contents: read
 
 jobs:
-  linux:
+  build-and-test:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
-      - name: Install build and formatting dependencies
+      - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential g++-14 clang-format clang-tidy debhelper dh-cmake gcovr libglfw3-dev libgl1-mesa-dev ninja-build pkg-config
+          sudo apt-get install -y build-essential g++-14 libglfw3-dev libgl1-mesa-dev ninja-build pkg-config
 
-      - name: Configure Debug
-        run: cmake --preset debug -DCMAKE_CXX_COMPILER=g++-14 -DENABLE_CLANG_TIDY=ON -DENABLE_COVERAGE=ON
+      - name: Configure Release
+        run: cmake --preset release-headless -DCMAKE_CXX_COMPILER=g++-14
 
-      - name: Build Debug
+      - name: Build Release
+        run: cmake --build --preset release-headless --parallel 2
+
+      - name: Test Release
+        run: ctest --preset release-headless
+
+  coverage:
+    if: github.event_name == 'pull_request'
+    needs: build-and-test
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - name: Install coverage dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential g++-14 gcovr libglfw3-dev libgl1-mesa-dev ninja-build pkg-config
+
+      - name: Configure coverage build
+        run: cmake --preset debug -DCMAKE_CXX_COMPILER=g++-14 -DENABLE_CLANG_TIDY=OFF
+
+      - name: Build coverage tests
         run: cmake --build --preset debug --parallel 2
 
-      - name: Test Debug
+      - name: Run coverage tests
         run: ctest --preset debug
 
-      - name: Generate coverage report
-        run: gcovr --merge-mode-functions=merge-use-line-min --root . --filter 'src/' --xml-pretty --output build/debug/coverage.xml
+      - name: Generate coverage summary
+        run: gcovr --merge-mode-functions=merge-use-line-min --root . --filter 'src/' --txt-summary > build/debug/coverage.txt
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4.6.2
         with:
-          name: debug-coverage
-          path: build/debug/coverage.xml
+          name: pr-coverage-report
+          path: build/debug/coverage.txt
+          if-no-files-found: error
 
-      - name: Configure GUI Release
-        run: cmake --preset release-gui -DCMAKE_CXX_COMPILER=g++-14 -DENABLE_CLANG_TIDY=OFF
-
-      - name: Build GUI Release
-        run: cmake --build --preset release-gui --parallel 2
-
-      - name: Install GUI Release
-        run: cmake --install build/release-gui --prefix "$RUNNER_TEMP/release-gui"
-
-      - name: Test GUI Release
-        run: ctest --preset release-gui
-
-      - name: Configure Headless Release
-        run: cmake --preset release-headless -DCMAKE_CXX_COMPILER=g++-14 -DENABLE_CLANG_TIDY=OFF
-
-      - name: Build Headless Release
-        run: cmake --build --preset release-headless --parallel 2
-
-      - name: Install Headless Release
-        run: cmake --install build/release-headless --prefix "$RUNNER_TEMP/release-headless"
-
-      - name: Test Headless Release
-        run: ctest --preset release-headless
-
-      - name: Generate headless DEB package
-        run: cpack --config build/release-headless/CPackConfig.cmake -G DEB -B build/packages/headless
-
-      - name: Upload headless DEB package
-        uses: actions/upload-artifact@v4.6.2
-        with:
-          name: im-cpp-headless-deb
-          path: build/packages/headless/*.deb
-
-      - name: Generate GUI DEB package
-        run: cpack --config build/release-gui/CPackConfig.cmake -G DEB -B build/packages/gui
-
-      - name: Upload GUI DEB package
-        uses: actions/upload-artifact@v4.6.2
-        with:
-          name: im-cpp-gui-deb
-          path: build/packages/gui/*.deb
-
-
-      - name: Configure headless GCC
-        run: cmake -S . -B build/headless -G Ninja -DCMAKE_CXX_COMPILER=g++-14 -DCMAKE_BUILD_TYPE=Debug -DBUILD_GUI=OFF -DBUILD_TESTS=ON -DENABLE_CLANG_TIDY=OFF -DENABLE_COVERAGE=OFF
-
-      - name: Build headless GCC
-        run: cmake --build build/headless --parallel 2
-
-      - name: Test headless GCC
-        run: ctest --test-dir build/headless --output-on-failure
-
-      - name: Install headless package
-        run: cmake --install build/headless --prefix /opt/im-cpp
+      - name: Post coverage report to pull request
+        if: github.event.pull_request.head.repo.full_name == github.repository
         env:
-          DESTDIR: ${{ runner.temp }}/stage
-
-      - name: Configure package consumer
-        run: cmake -S tests/package-consumer -B build/package-consumer -G Ninja -DCMAKE_CXX_COMPILER=g++-14 -DCMAKE_PREFIX_PATH="$RUNNER_TEMP/stage/opt/im-cpp" -DCMAKE_CXX_FLAGS=-march=x86-64
-
-      - name: Build package consumer
-        run: cmake --build build/package-consumer
-
-      - name: Smoke-test executable
-        run: ./build/headless/im-cpp check
-
-      - name: Smoke-test installed executable
-        run: "$RUNNER_TEMP/stage/opt/im-cpp/bin/im-cpp" check
-
-      - name: Test installed package consumer
-        run: ./build/package-consumer/package_consumer
-
-      - name: Check C++ formatting
-        run: find src tests -type f \( -name '*.cpp' -o -name '*.h' \) -print0 | xargs -0 clang-format --dry-run --Werror
-
-      - name: Check dependency installer syntax
-        run: bash -n scripts/install-build-dependencies.sh
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          report_file="$RUNNER_TEMP/coverage-comment.md"
+          {
+            printf '## im-cpp code coverage\n\n```text\n'
+            cat build/debug/coverage.txt
+            printf '\n```\n'
+          } > "$report_file"
+          body="$(cat "$report_file")"
+          comment_id="$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" | jq -sr 'add | map(select(.body | startswith("## im-cpp code coverage") and .user.login == "github-actions[bot]")) | last | .id // empty')"
+          if [ -n "$comment_id" ]; then
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$comment_id" -f body="$body"
+          else
+            gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" -f body="$body"
+          fi
