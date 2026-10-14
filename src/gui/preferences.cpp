@@ -1,16 +1,19 @@
 #include "gui/preferences.h"
 #include "gui/preferences_store.h"
 #include <algorithm>
+#include <atomic>
 #include <cerrno>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <fcntl.h>
 #include <filesystem>
 #include <fstream>
-#include <ios>
 #include <optional>
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <sys/types.h>
 #include <system_error>
 #include <unistd.h>
 
@@ -18,6 +21,28 @@ namespace im_cpp::gui
 {
 namespace
 {
+
+std::atomic<std::uint64_t> temporaryFileCounter = 0;
+constexpr std::uint32_t maximumTemporaryFileAttempts = 128;
+
+[[nodiscard]] int createTemporaryPreferencesFile(std::string & path)
+{
+    const std::string basePath = path;
+    for (std::uint32_t attempt = 0; attempt < maximumTemporaryFileAttempts; ++attempt)
+    {
+        path = basePath + ".tmp." + std::to_string(getpid()) + "." + std::to_string(temporaryFileCounter.fetch_add(1));
+        const int descriptor = open(path.c_str(), O_WRONLY | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
+        if (descriptor != -1 || errno != EEXIST)
+        {
+            if (descriptor == -1)
+            {
+                throw std::system_error(errno, std::generic_category(), "Cannot create temporary preferences file");
+            }
+            return descriptor;
+        }
+    }
+    throw std::system_error(EEXIST, std::generic_category(), "Cannot create temporary preferences file");
+}
 
 [[nodiscard]] std::optional<std::filesystem::path> preferencesPath()
 {
@@ -36,13 +61,9 @@ namespace
 class TemporaryPreferencesFile
 {
 public:
-    explicit TemporaryPreferencesFile(const std::filesystem::path & path) : path_(path.string() + ".XXXXXX")
+    explicit TemporaryPreferencesFile(const std::filesystem::path & path) :
+        path_(path.string()), descriptor_(createTemporaryPreferencesFile(path_))
     {
-        descriptor_ = mkstemp(path_.data());
-        if (descriptor_ == -1)
-        {
-            throw std::system_error(errno, std::generic_category(), "Cannot create temporary preferences file");
-        }
     }
 
     ~TemporaryPreferencesFile()
@@ -59,8 +80,10 @@ public:
 
     TemporaryPreferencesFile(const TemporaryPreferencesFile &) = delete;
     TemporaryPreferencesFile & operator=(const TemporaryPreferencesFile &) = delete;
+    TemporaryPreferencesFile(TemporaryPreferencesFile &&) = delete;
+    TemporaryPreferencesFile & operator=(TemporaryPreferencesFile &&) = delete;
 
-    void write(std::string_view contents)
+    void write(std::string_view contents) const
     {
         while (!contents.empty())
         {
@@ -106,13 +129,14 @@ private:
 
 Preferences loadPreferences()
 {
-    Preferences preferences;
     const auto path = preferencesPath();
-    if (!path)
-    {
-        return preferences;
-    }
-    std::ifstream file(*path);
+    return path ? loadPreferences(*path) : Preferences{};
+}
+
+Preferences loadPreferences(const std::filesystem::path & path)
+{
+    Preferences preferences;
+    std::ifstream file(path);
     std::string key;
     std::string value;
     while (file >> key >> value)
@@ -144,19 +168,23 @@ Preferences loadPreferences()
 void savePreferences(const Preferences & preferences)
 {
     const auto path = preferencesPath();
-    if (!path)
+    if (path)
     {
-        return;
+        savePreferences(preferences, *path);
     }
-    std::filesystem::create_directories(path->parent_path());
+}
+
+void savePreferences(const Preferences & preferences, const std::filesystem::path & path)
+{
+    std::filesystem::create_directories(path.parent_path());
     std::ostringstream contents;
     contents << "logs_panel_visible " << static_cast<int>(preferences.showLogPanel) << '\n';
     contents << "logs_autoscroll " << static_cast<int>(preferences.autoScroll) << '\n';
     contents << "logs_panel_height " << preferences.logPanelHeight << '\n';
     contents << "logs_panel_collapsed " << static_cast<int>(preferences.logPanelCollapsed) << '\n';
-    TemporaryPreferencesFile temporaryFile(*path);
+    TemporaryPreferencesFile temporaryFile(path);
     temporaryFile.write(contents.str());
-    temporaryFile.commit(*path);
+    temporaryFile.commit(path);
 }
 
 } // namespace im_cpp::gui

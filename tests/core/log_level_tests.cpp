@@ -3,6 +3,7 @@
 
 TEST_CASE("parseLogLevel_Should_ParseNamedLevels")
 {
+    REQUIRE(im_cpp::core::parseLogLevel("TRACE") == im_cpp::core::LogLevel::trace);
     REQUIRE(im_cpp::core::parseLogLevel("DEBUG") == im_cpp::core::LogLevel::debug);
     REQUIRE(im_cpp::core::parseLogLevel("info") == im_cpp::core::LogLevel::info);
     REQUIRE(im_cpp::core::parseLogLevel(" Warning ") == im_cpp::core::LogLevel::warning);
@@ -11,7 +12,7 @@ TEST_CASE("parseLogLevel_Should_ParseNamedLevels")
 
 TEST_CASE("parseLogLevel_Should_ParsePythonNumericLevels")
 {
-    REQUIRE(im_cpp::core::parseLogLevel("0") == im_cpp::core::LogLevel::notSet);
+    REQUIRE(im_cpp::core::parseLogLevel("0") == im_cpp::core::LogLevel::trace);
     REQUIRE(im_cpp::core::parseLogLevel("10") == im_cpp::core::LogLevel::debug);
     REQUIRE(im_cpp::core::parseLogLevel("20") == im_cpp::core::LogLevel::info);
     REQUIRE(im_cpp::core::parseLogLevel("30") == im_cpp::core::LogLevel::warning);
@@ -29,6 +30,6 @@ TEST_CASE("parseLogLevel_Should_ParseAliases")
 TEST_CASE("parseLogLevel_Should_RejectUnknownValues")
 {
     REQUIRE_FALSE(im_cpp::core::parseLogLevel("35").has_value());
-    REQUIRE_FALSE(im_cpp::core::parseLogLevel("trace").has_value());
+    REQUIRE_FALSE(im_cpp::core::parseLogLevel("notSet").has_value());
     REQUIRE_FALSE(im_cpp::core::parseLogLevel("").has_value());
 }

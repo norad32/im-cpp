@@ -1,11 +1,15 @@
 #include "app/cli.h"
+#include "core/gui_log_sink.h"
 #include "core/logger.h"
 #include <catch2/catch_test_macros.hpp>
 #include <filesystem>
 #include <fstream>
+#include <iterator>
 #include <memory>
 #include <spdlog/common.h>
+#include <spdlog/logger.h>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -53,28 +57,29 @@ TEST_CASE("runCli_Should_InvokeGuiRunnerWhenGuiCommandIsSelected")
     std::ostringstream output;
     std::ostringstream error;
     im_cpp::core::Logger logger("im-cpp-cli-gui-test");
-    bool gui_was_run = false;
-    spdlog::level::level_enum gui_log_level = spdlog::level::off;
+    bool guiWasRun = false;
+    spdlog::level::level_enum guiLogLevel = spdlog::level::off;
+    constexpr int expectedGuiExitCode = 7;
 
     const int result = im_cpp::app::runCli(arguments,
                                            output,
                                            error,
                                            logger,
                                            log_directory,
-                                           [&gui_was_run, &gui_log_level](std::shared_ptr<spdlog::logger> active_logger,
-                                                                          std::shared_ptr<im_cpp::core::GuiLogSink> log_sink)
+                                           [&guiWasRun, &guiLogLevel](const std::shared_ptr<spdlog::logger> & activeLogger,
+                                                                      const std::shared_ptr<im_cpp::core::GuiLogSink> & logSink)
                                            {
-                                               gui_was_run = active_logger != nullptr && log_sink != nullptr;
-                                               gui_log_level = active_logger->level();
-                                               return 7;
+                                               guiWasRun = activeLogger != nullptr && logSink != nullptr;
+                                               guiLogLevel = activeLogger->level();
+                                               return expectedGuiExitCode;
                                            });
 
-    REQUIRE(result == 7);
-    REQUIRE(gui_was_run);
+    REQUIRE(result == expectedGuiExitCode);
+    REQUIRE(guiWasRun);
 #ifdef RELEASE
-    REQUIRE(gui_log_level == spdlog::level::info);
+    REQUIRE(guiLogLevel == spdlog::level::info);
 #else
-    REQUIRE(gui_log_level == spdlog::level::debug);
+    REQUIRE(guiLogLevel == spdlog::level::debug);
 #endif
     REQUIRE(error.str().empty());
     std::ifstream logFile(log_directory / "im-cpp-cli-gui-test.log");
@@ -92,7 +97,7 @@ TEST_CASE("runCli_Should_RespectExplicitGuiLogLevel")
     std::ostringstream output;
     std::ostringstream error;
     im_cpp::core::Logger logger("im-cpp-cli-gui-log-level-test");
-    spdlog::level::level_enum gui_log_level = spdlog::level::off;
+    spdlog::level::level_enum guiLogLevel = spdlog::level::off;
 
     const int result = im_cpp::app::runCli(
         arguments,
@@ -100,14 +105,14 @@ TEST_CASE("runCli_Should_RespectExplicitGuiLogLevel")
         error,
         logger,
         log_directory,
-        [&gui_log_level](std::shared_ptr<spdlog::logger> active_logger, std::shared_ptr<im_cpp::core::GuiLogSink>)
+        [&guiLogLevel](const std::shared_ptr<spdlog::logger> & activeLogger, const std::shared_ptr<im_cpp::core::GuiLogSink> &)
         {
-            gui_log_level = active_logger->level();
+            guiLogLevel = activeLogger->level();
             return 0;
         });
 
     REQUIRE(result == 0);
-    REQUIRE(gui_log_level == spdlog::level::info);
+    REQUIRE(guiLogLevel == spdlog::level::info);
     REQUIRE(error.str().empty());
     std::filesystem::remove_all(log_directory);
 }
@@ -121,18 +126,19 @@ TEST_CASE("runCli_Should_LogGuiRunnerException")
     std::ostringstream error;
     im_cpp::core::Logger logger("im-cpp-cli-gui-exception-test");
 
-    const int result = im_cpp::app::runCli(arguments,
-                                           output,
-                                           error,
-                                           logger,
-                                           log_directory,
-                                           [](std::shared_ptr<spdlog::logger>, std::shared_ptr<im_cpp::core::GuiLogSink>) -> int
-                                           { throw std::runtime_error("GUI failure"); });
+    const int result = im_cpp::app::runCli(
+        arguments,
+        output,
+        error,
+        logger,
+        log_directory,
+        [](const std::shared_ptr<spdlog::logger> &, const std::shared_ptr<im_cpp::core::GuiLogSink> &) -> int
+        { throw std::runtime_error("GUI failure"); });
 
     std::ifstream logFile(log_directory / "im-cpp-cli-gui-exception-test.log");
     const std::string logContents((std::istreambuf_iterator<char>(logFile)), std::istreambuf_iterator<char>());
     REQUIRE(result == 1);
-    REQUIRE(logContents.contains("[error] [im-cpp-cli-gui-exception-test]"));
+    REQUIRE(logContents.contains("[error]"));
     REQUIRE(logContents.contains("Application failed: GUI failure"));
     REQUIRE(error.str() == "Application failed: GUI failure\n");
     std::filesystem::remove_all(log_directory);

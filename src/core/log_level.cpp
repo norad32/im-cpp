@@ -31,9 +31,9 @@ namespace
 std::optional<LogLevel> parseLogLevel(std::string_view value)
 {
     const std::string normalized = normalize(value);
-    if (normalized == "0" || normalized == "NOTSET")
+    if (normalized == "0" || normalized == "TRACE")
     {
-        return LogLevel::notSet;
+        return LogLevel::trace;
     }
     if (normalized == "10" || normalized == "DEBUG")
     {
@@ -62,8 +62,8 @@ std::string_view toString(LogLevel level) noexcept
 {
     switch (level)
     {
-        case LogLevel::notSet :
-            return "NOTSET";
+        case LogLevel::trace :
+            return "TRACE";
         case LogLevel::debug :
             return "DEBUG";
         case LogLevel::info :

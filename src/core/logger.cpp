@@ -24,30 +24,22 @@ namespace
 constexpr std::size_t maxLogFileSize = std::size_t{1024} * std::size_t{1024};
 constexpr std::size_t maxRotatedLogFiles = std::size_t{3};
 
-class SourceOrLoggerFlagFormatter final : public spdlog::custom_flag_formatter
+class SourceFilenameFlagFormatter final : public spdlog::custom_flag_formatter
 {
 public:
     [[nodiscard]] std::unique_ptr<spdlog::custom_flag_formatter> clone() const override
     {
-        return std::make_unique<SourceOrLoggerFlagFormatter>();
+        return std::make_unique<SourceFilenameFlagFormatter>();
     }
 
     void format(const spdlog::details::log_msg & message, const std::tm & time, spdlog::memory_buf_t & destination) override
     {
         static_cast<void>(time);
-        std::string_view value;
-        if (message.level <= spdlog::level::debug && !message.source.empty())
+        std::string_view value = message.source.filename;
+        const std::size_t separator = value.find_last_of("/\\");
+        if (separator != std::string_view::npos)
         {
-            value = message.source.filename;
-            const std::size_t separator = value.find_last_of("/\\");
-            if (separator != std::string_view::npos)
-            {
-                value.remove_prefix(separator + 1);
-            }
-        }
-        else
-        {
-            value = std::string_view(message.logger_name.data(), message.logger_name.size());
+            value.remove_prefix(separator + 1);
         }
         spdlog::details::fmt_helper::append_string_view(value, destination);
     }
@@ -56,11 +48,11 @@ public:
 [[nodiscard]] std::unique_ptr<spdlog::formatter> makeLogFormatter()
 {
     auto formatter = std::make_unique<spdlog::pattern_formatter>();
-    formatter->add_flag<SourceOrLoggerFlagFormatter>('N');
+    formatter->add_flag<SourceFilenameFlagFormatter>('N');
 #ifdef IM_CPP_DEBUG_BUILD
     formatter->set_pattern("%Y-%m-%d %H:%M:%S.%e [%l] [%N] [%#] %v");
 #else
-    formatter->set_pattern("%Y-%m-%d %H:%M:%S.%e [%l] [%N] %v");
+    formatter->set_pattern("%Y-%m-%d %H:%M:%S.%e [%l] %v");
 #endif
     return formatter;
 }
@@ -69,7 +61,7 @@ public:
 {
     switch (level)
     {
-        case LogLevel::notSet :
+        case LogLevel::trace :
             return spdlog::level::trace;
         case LogLevel::debug :
             return spdlog::level::debug;

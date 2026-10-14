@@ -1,7 +1,6 @@
 #include "gui/application.h"
 #include "core/gui_log_sink.h"
 #include "gui/preferences.h"
-#include "gui/preferences_store.h"
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
 #include <algorithm>

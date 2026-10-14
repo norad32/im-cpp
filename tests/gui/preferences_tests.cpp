@@ -2,84 +2,53 @@
 #include "gui/preferences_store.h"
 #include <catch2/catch_test_macros.hpp>
 #include <cmath>
-#include <cstdlib>
 #include <filesystem>
 #include <fstream>
-#include <optional>
+#include <iterator>
 #include <string>
 
 namespace
 {
 
-constexpr int overwriteExisting = 1;
-
-class EnvironmentVariableGuard
-{
-public:
-    EnvironmentVariableGuard(const char * name, const std::filesystem::path & value) : name_(name)
-    {
-        if (const char * previousValue = std::getenv(name_); previousValue != nullptr)
-        {
-            previousValue_.emplace(previousValue);
-        }
-        setenv(name_, value.c_str(), overwriteExisting);
-    }
-
-    ~EnvironmentVariableGuard()
-    {
-        if (previousValue_)
-        {
-            setenv(name_, previousValue_->c_str(), overwriteExisting);
-        }
-        else
-        {
-            unsetenv(name_);
-        }
-    }
-
-    EnvironmentVariableGuard(const EnvironmentVariableGuard &) = delete;
-    EnvironmentVariableGuard & operator=(const EnvironmentVariableGuard &) = delete;
-    EnvironmentVariableGuard(EnvironmentVariableGuard &&) = delete;
-    EnvironmentVariableGuard & operator=(EnvironmentVariableGuard &&) = delete;
-
-private:
-    const char * name_;
-    std::optional<std::string> previousValue_;
-};
+constexpr float heightTolerance = 0.001F;
+constexpr float expectedLogPanelHeight = 268.5F;
 
 } // namespace
 
 TEST_CASE("loadPreferences_Should_UseDefaultsWhenFileIsMissing")
 {
-    const auto configDirectory = std::filesystem::temp_directory_path() / "im-cpp-pref-defaults";
-    std::filesystem::remove_all(configDirectory);
-    EnvironmentVariableGuard configDirectoryGuard("XDG_CONFIG_HOME", configDirectory);
+    const auto preferencesFile = std::filesystem::temp_directory_path() / "im-cpp-pref-defaults" / "preferences.conf";
+    std::filesystem::remove_all(preferencesFile.parent_path());
 
-    const auto preferences = im_cpp::gui::loadPreferences();
+    const auto preferences = im_cpp::gui::loadPreferences(preferencesFile);
 
     REQUIRE_FALSE(preferences.showLogPanel);
     REQUIRE(preferences.autoScroll);
     REQUIRE_FALSE(preferences.logPanelCollapsed);
-    REQUIRE(std::abs(preferences.logPanelHeight) < 0.001F);
-    std::filesystem::remove_all(configDirectory);
+    REQUIRE(std::abs(preferences.logPanelHeight) < heightTolerance);
+    std::filesystem::remove_all(preferencesFile.parent_path());
 }
 
 TEST_CASE("savePreferences_Should_RoundTripSettings")
 {
     const auto configDirectory = std::filesystem::temp_directory_path() / "im-cpp-pref-roundtrip";
+    const auto preferencesFile = configDirectory / "im-cpp" / "preferences.conf";
     std::filesystem::remove_all(configDirectory);
-    EnvironmentVariableGuard configDirectoryGuard("XDG_CONFIG_HOME", configDirectory);
     const im_cpp::gui::Preferences expected{
-        .showLogPanel = true, .autoScroll = false, .logPanelCollapsed = true, .logPanelHeight = 268.5F};
+        .showLogPanel = true,
+        .autoScroll = false,
+        .logPanelCollapsed = true,
+        .logPanelHeight = expectedLogPanelHeight,
+    };
 
-    im_cpp::gui::savePreferences(expected);
-    const auto actual = im_cpp::gui::loadPreferences();
+    im_cpp::gui::savePreferences(expected, preferencesFile);
+    const auto actual = im_cpp::gui::loadPreferences(preferencesFile);
 
     REQUIRE(std::filesystem::is_regular_file(configDirectory / "im-cpp" / "preferences.conf"));
     REQUIRE(actual.showLogPanel);
     REQUIRE_FALSE(actual.autoScroll);
     REQUIRE(actual.logPanelCollapsed);
-    REQUIRE(std::abs(actual.logPanelHeight - 268.5F) < 0.001F);
+    REQUIRE(std::abs(actual.logPanelHeight - expectedLogPanelHeight) < heightTolerance);
     std::filesystem::remove_all(configDirectory);
 }
 
@@ -89,34 +58,35 @@ TEST_CASE("savePreferences_Should_ReplaceSymlinkWithoutWritingToItsTarget")
     const auto externalFile = std::filesystem::temp_directory_path() / "im-cpp-pref-symlink-target";
     std::filesystem::remove_all(configDirectory);
     std::filesystem::remove(externalFile);
-    EnvironmentVariableGuard configDirectoryGuard("XDG_CONFIG_HOME", configDirectory);
     const auto preferencesDirectory = configDirectory / "im-cpp";
+    const auto preferencesFile = preferencesDirectory / "preferences.conf";
     std::filesystem::create_directories(preferencesDirectory);
     {
         std::ofstream target(externalFile);
         target << "preserve this file\n";
     }
-    std::filesystem::create_symlink(externalFile, preferencesDirectory / "preferences.conf");
+    std::filesystem::create_symlink(externalFile, preferencesFile);
 
-    im_cpp::gui::savePreferences(im_cpp::gui::Preferences{.showLogPanel = true});
+    im_cpp::gui::savePreferences(im_cpp::gui::Preferences{.showLogPanel = true}, preferencesFile);
 
     std::ifstream target(externalFile);
     const std::string targetContents((std::istreambuf_iterator<char>(target)), std::istreambuf_iterator<char>());
     REQUIRE(targetContents == "preserve this file\n");
-    REQUIRE_FALSE(std::filesystem::is_symlink(preferencesDirectory / "preferences.conf"));
+    REQUIRE_FALSE(std::filesystem::is_symlink(preferencesFile));
     std::filesystem::remove_all(configDirectory);
     std::filesystem::remove(externalFile);
 }
 
-TEST_CASE("savePreferences_Should_NotUseRelativeXdgConfigHome")
+TEST_CASE("savePreferences_Should_ReplaceExistingPreferences")
 {
-    const auto configDirectory = std::filesystem::temp_directory_path() / "im-cpp-pref-relative";
-    std::filesystem::remove_all(configDirectory);
-    EnvironmentVariableGuard configDirectoryGuard("XDG_CONFIG_HOME", "relative-config-home");
-    EnvironmentVariableGuard homeDirectoryGuard("HOME", configDirectory);
+    const auto preferencesDirectory = std::filesystem::temp_directory_path() / "im-cpp-pref-existing";
+    const auto preferencesFile = preferencesDirectory / "preferences.conf";
+    std::filesystem::remove_all(preferencesDirectory);
 
-    im_cpp::gui::savePreferences(im_cpp::gui::Preferences{.showLogPanel = true});
+    im_cpp::gui::savePreferences(im_cpp::gui::Preferences{.showLogPanel = true}, preferencesFile);
+    const auto loaded = im_cpp::gui::loadPreferences(preferencesFile);
 
-    REQUIRE(std::filesystem::is_regular_file(configDirectory / ".config" / "im-cpp" / "preferences.conf"));
-    std::filesystem::remove_all(configDirectory);
+    REQUIRE(std::filesystem::is_regular_file(preferencesFile));
+    REQUIRE(loaded.showLogPanel);
+    std::filesystem::remove_all(preferencesDirectory);
 }

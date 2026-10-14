@@ -24,7 +24,7 @@ if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS MINIMUM_GCC_VERSION)
     )
 endif()
 
-option(ENABLE_CLANG_TIDY "Run clang-tidy during compilation when available" OFF)
+option(ENABLE_CLANG_TIDY "Run clang-tidy during compilation and fail on diagnostics" OFF)
 option(BUILD_TESTS "Build and register unit tests" ON)
 option(ENABLE_COVERAGE "Instrument project code for Debug gcovr reports" OFF)
 option(BUILD_GUI "Build the ImGui GLFW/OpenGL desktop GUI" ON)
@@ -145,15 +145,20 @@ endif()
 
 if(ENABLE_CLANG_TIDY)
     find_program(CLANG_TIDY_EXECUTABLE NAMES clang-tidy REQUIRED)
-    set(clang_tidy_targets core app ${EXECUTABLE_NAME})
+    set(clang_tidy_targets core app cli ${EXECUTABLE_NAME})
     if(BUILD_GUI)
         list(APPEND clang_tidy_targets gui)
+        if(BUILD_GUI_RUNTIME)
+            list(APPEND clang_tidy_targets ${GUI_EXECUTABLE_NAME})
+        endif()
+    endif()
+    if(BUILD_TESTS)
+        list(APPEND clang_tidy_targets tests)
     endif()
     foreach(target IN LISTS clang_tidy_targets)
         set_target_properties(
             ${target}
-            PROPERTIES CXX_CLANG_TIDY
-                       "${CLANG_TIDY_EXECUTABLE};--warnings-as-errors=-*")
+            PROPERTIES CXX_CLANG_TIDY "${CLANG_TIDY_EXECUTABLE}")
     endforeach()
 endif()
 

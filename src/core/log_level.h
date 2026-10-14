@@ -9,7 +9,7 @@ namespace im_cpp::core
 
 enum class LogLevel : std::uint8_t
 {
-    notSet,
+    trace,
     debug,
     info,
     warning,
