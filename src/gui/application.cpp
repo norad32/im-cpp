@@ -1,12 +1,13 @@
 #include "gui/application.h"
 #include "core/gui_log_sink.h"
+#include "gui/demo_panel.h"
+#include "gui/log_panel.h"
 #include "gui/preferences.h"
 #include "gui/theme.h"
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
 #include <algorithm>
 #include <array>
-#include <cmath>
 #include <cstddef>
 #include <cstdlib>
 #include <filesystem>
@@ -30,14 +31,8 @@ namespace im_cpp::gui
 namespace
 {
 
-constexpr float minimumLogPanelHeight = 96.0F;
-constexpr float initialMainWindowWidth = 520.0F;
-constexpr float initialMainWindowHeight = 250.0F;
 constexpr int initialApplicationWindowWidth = 1280;
 constexpr int initialApplicationWindowHeight = 800;
-constexpr float logPanelHeightRatio = 0.33F;
-constexpr float bottomScrollPosition = 1.0F;
-constexpr std::size_t maxDisplayedEntries = core::defaultGuiLogCapacity;
 constexpr std::size_t appIconWidth = 32;
 constexpr std::size_t appIconHeight = 32;
 constexpr int appIconWidthAsInt = 32;
@@ -316,148 +311,25 @@ private:
     bool initialized_ = false;
 };
 
-void appendEntries(std::vector<core::GuiLogEntry> & entries, const std::vector<core::GuiLogEntry> & newEntries)
+ImGuiID drawDockSpace(float bottomPanelHeight)
 {
-    for (const auto & entry : newEntries)
-    {
-        if (entries.size() == maxDisplayedEntries)
-        {
-            entries.erase(entries.begin());
-        }
-        entries.push_back(entry);
-    }
-}
-
-void drawMainWindow(spdlog::logger & logger, Preferences & preferences, bool & shouldClose)
-{
-    ImGui::SetNextWindowSize(ImVec2(initialMainWindowWidth, initialMainWindowHeight), ImGuiCond_FirstUseEver);
-    if (ImGui::Begin("im-cpp"))
-    {
-        ImGui::Text("Hello I'm C++!");
-        if (ImGui::Button(preferences.showLogPanel ? "Hide Logs (§)" : "Show Logs (§)"))
-        {
-            preferences.showLogPanel = !preferences.showLogPanel;
-            savePreferences(preferences);
-        }
-        ImGui::SameLine();
-        if (ImGui::Button("Generate Test Logs"))
-        {
-            logger.log(
-                spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION}, spdlog::level::trace, "Generated a trace message");
-            logger.log(
-                spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION}, spdlog::level::debug, "Generated a debug message");
-            logger.log(spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION},
-                       spdlog::level::info,
-                       "Generated an information message");
-            logger.log(
-                spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION}, spdlog::level::warn, "Generated a warning message");
-            logger.log(
-                spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION}, spdlog::level::err, "Generated an error message");
-        }
-        ImGui::SameLine();
-        if (ImGui::Button("Close"))
-        {
-            shouldClose = true;
-        }
-    }
-    ImGui::End();
-}
-
-void drawLogEntries(const std::vector<core::GuiLogEntry> & entries,
-                    const Preferences & preferences,
-                    bool newEntriesWereAdded,
-                    bool & followScroll)
-{
-    ImGui::BeginChild("LogEntries", ImVec2(0.0F, 0.0F), ImGuiChildFlags_None, ImGuiWindowFlags_HorizontalScrollbar);
-    const bool wasAtBottom = ImGui::GetScrollY() >= ImGui::GetScrollMaxY();
-    for (const auto & entry : entries)
-    {
-        const theme::Color color = theme::logLevelColor(entry.level);
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(color.red, color.green, color.blue, color.alpha));
-        ImGui::TextWrapped("%s", entry.formattedMessage.c_str());
-        ImGui::PopStyleColor();
-    }
-    if (preferences.autoScroll && (newEntriesWereAdded || (followScroll && wasAtBottom)))
-    {
-        ImGui::SetScrollHereY(bottomScrollPosition);
-    }
-    followScroll = preferences.autoScroll;
-    ImGui::EndChild();
-}
-
-void drawLogPanelContents(core::GuiLogSink & logSink,
-                          Preferences & preferences,
-                          std::vector<core::GuiLogEntry> & entries,
-                          bool & followScroll)
-{
-    const auto newEntries = logSink.drain();
-    appendEntries(entries, newEntries);
-    const bool newEntriesWereAdded = !newEntries.empty();
-    if (ImGui::Checkbox("Autoscroll", &preferences.autoScroll))
-    {
-        savePreferences(preferences);
-    }
-    ImGui::SameLine();
-    if (ImGui::Button("Clear"))
-    {
-        entries.clear();
-        logSink.clear();
-    }
-    ImGui::Separator();
-    drawLogEntries(entries, preferences, newEntriesWereAdded, followScroll);
-}
-
-void drawLogPanel(core::GuiLogSink & logSink,
-                  Preferences & preferences,
-                  std::vector<core::GuiLogEntry> & entries,
-                  bool & followScroll)
-{
-    if (!preferences.showLogPanel)
-    {
-        return;
-    }
     const ImGuiViewport * viewport = ImGui::GetMainViewport();
-    const bool wasVisible = preferences.showLogPanel;
-    const float maximumPanelHeight = std::max(minimumLogPanelHeight, viewport->WorkSize.y * 0.8F);
-    if (preferences.logPanelHeight <= 0.0F)
-    {
-        preferences.logPanelHeight =
-            std::clamp(viewport->WorkSize.y * logPanelHeightRatio, minimumLogPanelHeight, maximumPanelHeight);
-    }
-    preferences.logPanelHeight = std::clamp(preferences.logPanelHeight, minimumLogPanelHeight, maximumPanelHeight);
-    const float collapsedPanelHeight = ImGui::GetFrameHeight();
-    const float panelHeight = preferences.logPanelCollapsed ? collapsedPanelHeight : preferences.logPanelHeight;
-    const float minimumPanelHeight = preferences.logPanelCollapsed ? collapsedPanelHeight : minimumLogPanelHeight;
-    ImGui::SetNextWindowSizeConstraints(ImVec2(viewport->WorkSize.x, minimumPanelHeight),
-                                        ImVec2(viewport->WorkSize.x, maximumPanelHeight));
-    ImGui::SetNextWindowPos(ImVec2(viewport->WorkPos.x, viewport->WorkPos.y + viewport->WorkSize.y - panelHeight),
-                            ImGuiCond_Always);
-    ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x, preferences.logPanelHeight), ImGuiCond_Appearing);
-    ImGui::SetNextWindowCollapsed(preferences.logPanelCollapsed, ImGuiCond_Appearing);
-    constexpr auto panelFlags = static_cast<ImGuiWindowFlags>(static_cast<unsigned int>(ImGuiWindowFlags_NoMove) |
-                                                              static_cast<unsigned int>(ImGuiWindowFlags_NoSavedSettings));
-    const bool windowContentsVisible = ImGui::Begin("Logs", &preferences.showLogPanel, panelFlags);
-    const bool isCollapsed = ImGui::IsWindowCollapsed();
-    if (isCollapsed != preferences.logPanelCollapsed)
-    {
-        preferences.logPanelCollapsed = isCollapsed;
-        savePreferences(preferences);
-    }
-    if (windowContentsVisible && !isCollapsed)
-    {
-        drawLogPanelContents(logSink, preferences, entries, followScroll);
-        const float updatedPanelHeight = ImGui::GetWindowSize().y;
-        if (std::abs(updatedPanelHeight - preferences.logPanelHeight) > 1.0F)
-        {
-            preferences.logPanelHeight = updatedPanelHeight;
-            savePreferences(preferences);
-        }
-    }
+    const float dockSpaceHeight = std::max(0.0F, viewport->WorkSize.y - bottomPanelHeight);
+    ImGui::SetNextWindowPos(viewport->WorkPos, ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x, dockSpaceHeight), ImGuiCond_Always);
+    constexpr auto dockSpaceWindowFlags = static_cast<ImGuiWindowFlags>(
+        static_cast<unsigned int>(ImGuiWindowFlags_NoDocking) | static_cast<unsigned int>(ImGuiWindowFlags_NoTitleBar) |
+        static_cast<unsigned int>(ImGuiWindowFlags_NoCollapse) | static_cast<unsigned int>(ImGuiWindowFlags_NoResize) |
+        static_cast<unsigned int>(ImGuiWindowFlags_NoMove) | static_cast<unsigned int>(ImGuiWindowFlags_NoBringToFrontOnFocus) |
+        static_cast<unsigned int>(ImGuiWindowFlags_NoNavFocus) | static_cast<unsigned int>(ImGuiWindowFlags_NoBackground) |
+        static_cast<unsigned int>(ImGuiWindowFlags_NoSavedSettings) | static_cast<unsigned int>(ImGuiWindowFlags_NoScrollbar) |
+        static_cast<unsigned int>(ImGuiWindowFlags_NoScrollWithMouse));
+    ImGui::Begin("BackgroundDockSpace", nullptr, dockSpaceWindowFlags);
+    constexpr ImGuiDockNodeFlags dockSpaceFlags = ImGuiDockNodeFlags_PassthruCentralNode;
+    const ImGuiID dockSpaceId = ImGui::GetID("BackgroundDockSpace");
+    ImGui::DockSpace(dockSpaceId, ImVec2(0.0F, 0.0F), dockSpaceFlags);
     ImGui::End();
-    if (preferences.showLogPanel != wasVisible)
-    {
-        savePreferences(preferences);
-    }
+    return dockSpaceId;
 }
 
 void renderFrame(GLFWwindow * window)
@@ -479,7 +351,8 @@ void drawFrame(GLFWwindow * window,
                Preferences & preferences,
                bool & shouldClose,
                std::vector<core::GuiLogEntry> & entries,
-               bool & followScroll)
+               bool & followScroll,
+               DemoPanelState & demoPanelState)
 {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
@@ -490,8 +363,10 @@ void drawFrame(GLFWwindow * window,
         preferences.showLogPanel = !preferences.showLogPanel;
         savePreferences(preferences);
     }
-    drawMainWindow(logger, preferences, shouldClose);
-    drawLogPanel(logSink, preferences, entries, followScroll);
+    const float bottomPanelHeight = drawLogPanel(logSink, preferences, entries, followScroll);
+    const ImGuiID dockSpaceId = drawDockSpace(bottomPanelHeight);
+    ImGui::SetNextWindowDockID(dockSpaceId, ImGuiCond_FirstUseEver);
+    drawDemoPanel(logger, preferences, shouldClose, demoPanelState);
     renderFrame(window);
 }
 
@@ -529,12 +404,15 @@ int Application::run()
     const OpenGLBackend openGLBackend;
 
     ImGui::GetIO().IniFilename = nullptr;
+    ImGui::GetIO().ConfigFlags = static_cast<ImGuiConfigFlags>(
+        static_cast<unsigned int>(ImGui::GetIO().ConfigFlags) | static_cast<unsigned int>(ImGuiConfigFlags_DockingEnable));
     std::vector<core::GuiLogEntry> entries;
     bool followScroll = true;
+    DemoPanelState demoPanelState;
     while (glfwWindowShouldClose(window.get()) == GLFW_FALSE && !shouldClose_)
     {
         glfwPollEvents();
-        drawFrame(window.get(), *logger_, *logSink_, preferences_, shouldClose_, entries, followScroll);
+        drawFrame(window.get(), *logger_, *logSink_, preferences_, shouldClose_, entries, followScroll, demoPanelState);
     }
 
     SPDLOG_LOGGER_INFO(logger_, "GUI closed");

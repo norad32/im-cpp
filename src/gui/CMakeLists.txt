@@ -11,7 +11,12 @@ if(NOT TARGET glfw)
 endif()
 include(GuiDependencies)
 
-add_library(gui application.cpp preferences.cpp)
+add_library(
+    gui
+    application.cpp
+    demo_panel.cpp
+    log_panel.cpp
+    preferences.cpp)
 set_target_properties(gui PROPERTIES EXPORT_NAME gui)
 set_target_properties(imgui PROPERTIES EXPORT_NAME imgui)
 target_include_directories(
