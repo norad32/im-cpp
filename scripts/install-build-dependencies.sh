@@ -53,6 +53,7 @@ install_pacman() {
         base-devel
         catch2
         cmake
+        git
         ninja
         gcc
         clang-tools-extra
