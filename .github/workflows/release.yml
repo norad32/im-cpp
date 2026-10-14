@@ -12,7 +12,7 @@ jobs:
   build-release:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Verify release tag matches project version
         env:
@@ -70,14 +70,14 @@ jobs:
         run: cp build/release-gui/packaging/arch/PKGBUILD "$RUNNER_TEMP/PKGBUILD"
 
       - name: Upload Linux release assets
-        uses: actions/upload-artifact@v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: linux-release-assets
           path: dist
           if-no-files-found: error
 
       - name: Upload Arch PKGBUILD
-        uses: actions/upload-artifact@v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: arch-pkgbuild
           path: ${{ runner.temp }}/PKGBUILD
@@ -88,7 +88,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Download generated PKGBUILD
-        uses: actions/download-artifact@v4.3.0
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: arch-pkgbuild
           path: ${{ runner.temp }}/arch-build
@@ -110,7 +110,7 @@ jobs:
             '
 
       - name: Upload Arch packages
-        uses: actions/upload-artifact@v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: arch-release-assets
           path: ${{ runner.temp }}/arch-packages/*.pkg.tar.zst
@@ -126,13 +126,13 @@ jobs:
       contents: write
     steps:
       - name: Download Linux release assets
-        uses: actions/download-artifact@v4.3.0
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: linux-release-assets
           path: dist
 
       - name: Download Arch packages
-        uses: actions/download-artifact@v4.3.0
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: arch-release-assets
           path: dist/arch

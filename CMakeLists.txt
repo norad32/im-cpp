@@ -87,7 +87,7 @@ if(NOT spdlog_FOUND)
         CACHE BOOL "Disable spdlog examples" FORCE)
     application_pin_fetchcontent_dependency(
         spdlog https://github.com/gabime/spdlog.git
-        79524ddd08a4ec981b7fea76afd08ee05f83755d)
+        79524ddd08a4ec981b7fea76afd08ee05f83755d) # spdlog v1.17.0
     FetchContent_MakeAvailable(spdlog)
 endif()
 
@@ -104,7 +104,7 @@ if(NOT CLI11_FOUND)
         CACHE BOOL "Disable CLI11 tests" FORCE)
     application_pin_fetchcontent_dependency(
         CLI11 https://github.com/CLIUtils/CLI11.git
-        6c7b07a878ad834957b98d0f9ce1dbe0cb204fc9)
+        6c7b07a878ad834957b98d0f9ce1dbe0cb204fc9) # CLI11 v2.4.2
     set(CMAKE_POLICY_VERSION_MINIMUM 3.10)
     FetchContent_MakeAvailable(CLI11)
     unset(CMAKE_POLICY_VERSION_MINIMUM)

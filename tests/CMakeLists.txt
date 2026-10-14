@@ -4,13 +4,14 @@ include(FetchContent)
 find_package(
     Catch2
     ${CATCH2_PACKAGE_VERSION}
+    EXACT
     CONFIG
     QUIET
     COMPONENTS Catch2WithMain)
 if(NOT Catch2_FOUND)
     application_pin_fetchcontent_dependency(
         Catch2 https://github.com/catchorg/Catch2.git
-        2b60af89e23d28eefc081bc930831ee9d45ea58b)
+        2b60af89e23d28eefc081bc930831ee9d45ea58b) # Catch2 v3.8.1
     FetchContent_MakeAvailable(Catch2)
     set(Catch2_SOURCE_DIR "${catch2_SOURCE_DIR}")
 else()
