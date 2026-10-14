@@ -58,7 +58,7 @@ jobs:
         run: ctest --preset debug
 
       - name: Generate coverage summary
-        run: gcovr --merge-mode-functions=merge-use-line-min --root . --filter 'src/' --txt-summary > build/debug/coverage.txt
+        run: gcovr --gcov-executable gcov-14 --merge-mode-functions=merge-use-line-min --root . --filter 'src/' --txt-summary > build/debug/coverage.txt
 
       - name: Upload coverage report
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
