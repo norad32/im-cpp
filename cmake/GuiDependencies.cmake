@@ -1,5 +1,5 @@
 include(FetchContent)
-im_cpp_pin_fetchcontent_dependency(imgui https://github.com/ocornut/imgui.git
+application_pin_fetchcontent_dependency(imgui https://github.com/ocornut/imgui.git
                                    f5befd2d29e66809cd1110a152e375a7f1981f06)
 FetchContent_MakeAvailable(imgui)
 

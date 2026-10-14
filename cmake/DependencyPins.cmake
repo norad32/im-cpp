@@ -1,5 +1,5 @@
 function(
-    im_cpp_pin_fetchcontent_dependency
+    application_pin_fetchcontent_dependency
     dependency_name
     repository
     commit)

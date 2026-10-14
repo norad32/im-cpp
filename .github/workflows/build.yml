@@ -109,7 +109,7 @@ jobs:
         run: "$RUNNER_TEMP/stage/opt/im-cpp/bin/im-cpp" check
 
       - name: Test installed package consumer
-        run: ./build/package-consumer/im_cpp_package_consumer
+        run: ./build/package-consumer/package_consumer
 
       - name: Check C++ formatting
         run: find src tests -type f \( -name '*.cpp' -o -name '*.h' \) -print0 | xargs -0 clang-format --dry-run --Werror

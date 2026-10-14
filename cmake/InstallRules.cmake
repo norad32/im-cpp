@@ -1,14 +1,14 @@
 include(CMakePackageConfigHelpers)
 
 install(
-    TARGETS im_cpp_options im_core im_app
+    TARGETS application_options core im_app
     EXPORT ${CMAKE_PACKAGE_NAME}Targets
     ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT Development
     LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT Development)
 
 if(BUILD_GUI)
     install(
-        TARGETS im_gui imgui
+        TARGETS guii imgui
         EXPORT ${CMAKE_PACKAGE_NAME}Targets
         ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT Development
         LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT Development)

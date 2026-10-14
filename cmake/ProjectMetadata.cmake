@@ -1,7 +1,7 @@
 set(CMAKE_PACKAGE_NAME "application")
 set(DISTRIBUTION_NAME "im-cpp")
 set(PROJECT_VERSION "0.1.0")
-set(PROJECT_DESCRIPTION "C++23 port of the im application")
+set(PROJECT_DESCRIPTION "C++23 starter template")
 set(PROJECT_HOMEPAGE_URL "https://github.com/norad32/im-cpp")
 set(PROJECT_LICENSE "MIT")
 set(PROJECT_AUTHOR "norad32")
