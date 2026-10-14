@@ -1,3 +1,4 @@
+#include "core/app_info.h"
 #include "core/logger.h"
 #include "core/gui_log_sink.h"
 #include "core/log_level.h"
@@ -13,6 +14,7 @@
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <stdexcept>
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -92,11 +94,11 @@ public:
     if (const char * stateDirectory = std::getenv("XDG_STATE_HOME");
         stateDirectory != nullptr && !std::string_view(stateDirectory).empty())
     {
-        return std::filesystem::path(stateDirectory) / "im-cpp" / "logs";
+        return std::filesystem::path(stateDirectory) / std::string(applicationName()) / "logs";
     }
     if (const char * homeDirectory = std::getenv("HOME"); homeDirectory != nullptr && !std::string_view(homeDirectory).empty())
     {
-        return std::filesystem::path(homeDirectory) / ".local" / "state" / "im-cpp" / "logs";
+        return std::filesystem::path(homeDirectory) / ".local" / "state" / std::string(applicationName()) / "logs";
     }
     throw std::runtime_error("Cannot determine log directory: XDG_STATE_HOME and HOME are unset");
 }

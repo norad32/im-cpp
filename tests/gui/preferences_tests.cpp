@@ -1,3 +1,4 @@
+#include "core/app_info.h"
 #include "gui/preferences.h"
 #include "gui/preferences_store.h"
 #include <catch2/catch_test_macros.hpp>
@@ -32,7 +33,7 @@ TEST_CASE("loadPreferences_Should_UseDefaultsWhenFileIsMissing")
 TEST_CASE("savePreferences_Should_RoundTripSettings")
 {
     const auto configDirectory = std::filesystem::temp_directory_path() / "pref-roundtrip";
-    const auto preferencesFile = configDirectory / "im-cpp" / "preferences.conf";
+    const auto preferencesFile = configDirectory / std::string(im_cpp::core::applicationName()) / "preferences.conf";
     std::filesystem::remove_all(configDirectory);
     const im_cpp::gui::Preferences expected{
         .showLogPanel = true,
@@ -44,7 +45,7 @@ TEST_CASE("savePreferences_Should_RoundTripSettings")
     im_cpp::gui::savePreferences(expected, preferencesFile);
     const auto actual = im_cpp::gui::loadPreferences(preferencesFile);
 
-    REQUIRE(std::filesystem::is_regular_file(configDirectory / "im-cpp" / "preferences.conf"));
+    REQUIRE(std::filesystem::is_regular_file(configDirectory / std::string(im_cpp::core::applicationName()) / "preferences.conf"));
     REQUIRE(actual.showLogPanel);
     REQUIRE_FALSE(actual.autoScroll);
     REQUIRE(actual.logPanelCollapsed);
@@ -58,7 +59,7 @@ TEST_CASE("savePreferences_Should_ReplaceSymlinkWithoutWritingToItsTarget")
     const auto externalFile = std::filesystem::temp_directory_path() / "pref-symlink-target";
     std::filesystem::remove_all(configDirectory);
     std::filesystem::remove(externalFile);
-    const auto preferencesDirectory = configDirectory / "im-cpp";
+    const auto preferencesDirectory = configDirectory / std::string(im_cpp::core::applicationName());
     const auto preferencesFile = preferencesDirectory / "preferences.conf";
     std::filesystem::create_directories(preferencesDirectory);
     {

@@ -1,3 +1,4 @@
+#include "core/app_info.h"
 #include "gui/application.h"
 #include "core/gui_log_sink.h"
 #include "gui/demo_panel.h"
@@ -69,13 +70,13 @@ using AppIconPixels = std::array<unsigned char, appIconWidth * appIconHeight * a
     const std::filesystem::path executablePath = std::filesystem::read_symlink("/proc/self/exe", error);
     if (!error)
     {
-        std::ifstream file(executablePath.parent_path() / IM_CPP_ICON_INSTALL_RELATIVE_PATH);
+        std::ifstream file(executablePath.parent_path() / APPLICATION_ICON_INSTALL_RELATIVE_PATH);
         if (file)
         {
             return file;
         }
     }
-    return std::ifstream(IM_CPP_ICON_SOURCE_PATH);
+    return std::ifstream(APPLICATION_ICON_SOURCE_PATH);
 }
 
 [[nodiscard]] unsigned char parseHexDigit(char value)
@@ -381,10 +382,16 @@ int Application::run()
     SPDLOG_LOGGER_DEBUG(logger_, "GUI starting");
     const GlfwSession glfwSession;
 #if GLFW_VERSION_MAJOR > 3 || (GLFW_VERSION_MAJOR == 3 && GLFW_VERSION_MINOR >= 4)
-    glfwWindowHintString(GLFW_WAYLAND_APP_ID, "im-cpp");
+    const std::string applicationId(core::applicationId());
+    glfwWindowHintString(GLFW_WAYLAND_APP_ID, applicationId.c_str());
 #endif
+    const std::string applicationName(core::applicationName());
     const std::unique_ptr<GLFWwindow, WindowDeleter> window{
-        glfwCreateWindow(initialApplicationWindowWidth, initialApplicationWindowHeight, "im-cpp", nullptr, nullptr)};
+        glfwCreateWindow(initialApplicationWindowWidth,
+                         initialApplicationWindowHeight,
+                         applicationName.c_str(),
+                         nullptr,
+                         nullptr)};
     if (!window)
     {
         throw std::runtime_error("Failed to create GUI window");

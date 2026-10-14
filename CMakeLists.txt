@@ -15,12 +15,13 @@ if(NOT
    "GNU")
     message(
         FATAL_ERROR
-            "im-cpp requires GCC. Configure with -DCMAKE_CXX_COMPILER=g++.")
+            "${DISTRIBUTION_NAME} requires GCC. Configure with -DCMAKE_CXX_COMPILER=g++."
+    )
 endif()
 if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS MINIMUM_GCC_VERSION)
     message(
         FATAL_ERROR
-            "im-cpp requires GCC ${MINIMUM_GCC_VERSION} or newer; found ${CMAKE_CXX_COMPILER_VERSION}."
+            "${DISTRIBUTION_NAME} requires GCC ${MINIMUM_GCC_VERSION} or newer; found ${CMAKE_CXX_COMPILER_VERSION}."
     )
 endif()
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/app_info.h"
 #include "core/gui_log_sink.h"
 #include "core/log_level.h"
 #include <filesystem>
@@ -14,7 +15,7 @@ namespace im_cpp::core
 class Logger
 {
 public:
-    explicit Logger(std::string_view name = "im-cpp");
+    explicit Logger(std::string_view name = applicationName());
     ~Logger();
 
     Logger(const Logger &) = delete;

@@ -70,14 +70,16 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
+          distribution_name="$(awk -F '"' '/set[(]DISTRIBUTION_NAME/ {print $2}' cmake/ProjectMetadata.cmake)"
+          coverage_marker="## ${distribution_name} code coverage"
           report_file="$RUNNER_TEMP/coverage-comment.md"
           {
-            printf '## im-cpp code coverage\n\n```text\n'
+            printf '## %s code coverage\n\n```text\n' "$distribution_name"
             cat build/debug/coverage.txt
             printf '\n```\n'
           } > "$report_file"
           body="$(cat "$report_file")"
-          comment_id="$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" | jq -sr 'add | map(select(.body | startswith("## im-cpp code coverage") and .user.login == "github-actions[bot]")) | last | .id // empty')"
+          comment_id="$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" | jq -sr --arg marker "$coverage_marker" 'add | map(select(.body | startswith($marker) and .user.login == "github-actions[bot]")) | last | .id // empty')"
           if [ -n "$comment_id" ]; then
             gh api --method PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$comment_id" -f body="$body"
           else

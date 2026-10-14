@@ -3,7 +3,7 @@
 
 TEST_CASE("applicationName_Should_ReturnImCpp")
 {
-    REQUIRE(im_cpp::core::applicationName() == "im-cpp");
+    REQUIRE(im_cpp::core::applicationName() == im_cpp::core::metadata::applicationName);
     REQUIRE(im_cpp::core::applicationVersion() == "0.1.0");
     REQUIRE_FALSE(im_cpp::core::applicationDescription().empty());
     REQUIRE_FALSE(im_cpp::core::applicationHomepage().empty());

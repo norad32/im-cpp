@@ -10,6 +10,11 @@ namespace im_cpp::core
     return metadata::applicationName;
 }
 
+[[nodiscard]] constexpr std::string_view applicationId() noexcept
+{
+    return metadata::applicationId;
+}
+
 [[nodiscard]] constexpr std::string_view applicationVersion() noexcept
 {
     return metadata::applicationVersion;

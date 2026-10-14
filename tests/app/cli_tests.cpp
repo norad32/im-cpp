@@ -1,4 +1,5 @@
 #include "app/cli.h"
+#include "core/app_info.h"
 #include "core/gui_log_sink.h"
 #include "core/logger.h"
 #include <catch2/catch_test_macros.hpp>
@@ -45,7 +46,8 @@ TEST_CASE("runCli_Should_PrintVersion")
     const int result = im_cpp::app::runCli(arguments, output, error, logger);
 
     REQUIRE(result == 0);
-    REQUIRE(output.str() == "im-cpp 0.1.0\n");
+    REQUIRE(output.str() == std::string(im_cpp::core::applicationName()) + " " +
+                                 std::string(im_cpp::core::applicationVersion()) + "\n");
     REQUIRE(error.str().empty());
 }
 

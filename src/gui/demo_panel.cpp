@@ -1,3 +1,4 @@
+#include "core/app_info.h"
 #include "gui/demo_panel.h"
 #include "gui/preferences.h"
 #include <algorithm>
@@ -5,6 +6,7 @@
 #include <imgui.h>
 #include <spdlog/common.h>
 #include <spdlog/logger.h>
+#include <string>
 
 namespace im_cpp::gui
 {
@@ -69,7 +71,8 @@ void drawDemoPanel(spdlog::logger & logger,
                                                    std::min(minimumDemoPanelHeight, availableHeight)),
                                             ImVec2(availableWidth, availableHeight));
     }
-    const bool windowContentsVisible = ImGui::Begin("im-cpp");
+    const std::string panelName(core::applicationName());
+    const bool windowContentsVisible = ImGui::Begin(panelName.c_str());
     state.docked = ImGui::IsWindowDocked();
     state.x = ImGui::GetWindowPos().x;
     state.y = ImGui::GetWindowPos().y;

@@ -1,3 +1,4 @@
+#include "core/app_info.h"
 #include "gui/preferences.h"
 #include "gui/preferences_store.h"
 #include <algorithm>
@@ -49,11 +50,11 @@ constexpr std::uint32_t maximumTemporaryFileAttempts = 128;
     if (const char * configDirectory = std::getenv("XDG_CONFIG_HOME");
         configDirectory != nullptr && std::filesystem::path(configDirectory).is_absolute())
     {
-        return std::filesystem::path(configDirectory) / "im-cpp" / "preferences.conf";
+        return std::filesystem::path(configDirectory) / std::string(core::applicationName()) / "preferences.conf";
     }
     if (const char * homeDirectory = std::getenv("HOME"); homeDirectory != nullptr && !std::string_view(homeDirectory).empty())
     {
-        return std::filesystem::path(homeDirectory) / ".config" / "im-cpp" / "preferences.conf";
+        return std::filesystem::path(homeDirectory) / ".config" / std::string(core::applicationName()) / "preferences.conf";
     }
     return std::nullopt;
 }

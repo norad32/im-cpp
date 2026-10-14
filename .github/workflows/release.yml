@@ -20,6 +20,9 @@ jobs:
         run: |
           project_version="$(awk -F '"' '/set[(]PROJECT_VERSION/ {print $2}' cmake/ProjectMetadata.cmake)"
           test "$RELEASE_TAG" = "v$project_version"
+          distribution_name="$(awk -F '"' '/set[(]DISTRIBUTION_NAME/ {print $2}' cmake/ProjectMetadata.cmake)"
+          echo "DISTRIBUTION_NAME=$distribution_name" >> "$GITHUB_ENV"
+          echo "GUI_EXECUTABLE_NAME=${distribution_name}-gui" >> "$GITHUB_ENV"
 
       - name: Install build dependencies
         run: |
@@ -61,10 +64,10 @@ jobs:
           cmake --install build/release-headless --prefix "$RUNNER_TEMP/stage/headless/usr" --component Runtime
           cmake --install build/release-gui --prefix "$RUNNER_TEMP/stage/gui/usr" --component Runtime
           cmake --install build/release-gui --prefix "$RUNNER_TEMP/stage/gui/usr" --component Gui
-          install -Dm644 LICENSE "$RUNNER_TEMP/stage/headless/usr/share/licenses/im-cpp/LICENSE"
-          install -Dm644 LICENSE "$RUNNER_TEMP/stage/gui/usr/share/licenses/im-cpp/LICENSE"
-          tar -C "$RUNNER_TEMP/stage/headless" -czf "dist/im-cpp-headless-${version}-linux-x86_64.tar.gz" usr
-          tar -C "$RUNNER_TEMP/stage/gui" -czf "dist/im-cpp-gui-${version}-linux-x86_64.tar.gz" usr
+          install -Dm644 LICENSE "$RUNNER_TEMP/stage/headless/usr/share/licenses/${DISTRIBUTION_NAME}/LICENSE"
+          install -Dm644 LICENSE "$RUNNER_TEMP/stage/gui/usr/share/licenses/${DISTRIBUTION_NAME}/LICENSE"
+          tar -C "$RUNNER_TEMP/stage/headless" -czf "dist/${DISTRIBUTION_NAME}-headless-${version}-linux-x86_64.tar.gz" usr
+          tar -C "$RUNNER_TEMP/stage/gui" -czf "dist/${GUI_EXECUTABLE_NAME}-${version}-linux-x86_64.tar.gz" usr
 
       - name: Prepare Arch PKGBUILD
         run: cp build/release-gui/packaging/arch/PKGBUILD "$RUNNER_TEMP/PKGBUILD"

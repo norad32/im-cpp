@@ -62,16 +62,17 @@ if(BUILD_GUI)
             set(GUI_DESKTOP_EXECUTABLE "${EXECUTABLE_NAME} gui")
             set(GUI_DESKTOP_COMPONENT Runtime)
         endif()
-        configure_file("${CMAKE_CURRENT_SOURCE_DIR}/assets/im-cpp.desktop"
-                       "${CMAKE_CURRENT_BINARY_DIR}/im-cpp.desktop" @ONLY)
+        configure_file(
+            "${CMAKE_CURRENT_SOURCE_DIR}/assets/${DISTRIBUTION_NAME}.desktop"
+            "${CMAKE_CURRENT_BINARY_DIR}/${DISTRIBUTION_NAME}.desktop" @ONLY)
         install(
-            FILES "${CMAKE_CURRENT_BINARY_DIR}/im-cpp.desktop"
+            FILES "${CMAKE_CURRENT_BINARY_DIR}/${DISTRIBUTION_NAME}.desktop"
             DESTINATION "${CMAKE_INSTALL_DATADIR}/applications"
             COMPONENT "${GUI_DESKTOP_COMPONENT}")
         install(
             FILES "${CMAKE_CURRENT_SOURCE_DIR}/assets/app_icon.svg"
             DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps"
-            RENAME "im-cpp.svg"
+            RENAME "${DISTRIBUTION_NAME}.svg"
             COMPONENT "${GUI_DESKTOP_COMPONENT}")
     endif()
 endif()
