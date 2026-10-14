@@ -397,8 +397,7 @@ int Application::run()
     glfwSwapInterval(1);
     const ImGuiContext guiContext;
     ImGui::StyleColorsDark();
-    ImGui::GetStyle().Colors[ImGuiCol_WindowBg] =
-        ImVec4(theme::background.red, theme::background.green, theme::background.blue, theme::background.alpha);
+    theme::applyImGuiStyle();
     const GlfwBackend glfwBackend(window.get());
     const OpenGLBackend openGLBackend;
 
