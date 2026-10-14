@@ -16,19 +16,19 @@
 
 TEST_CASE("runCli_Should_PrintCheckResult")
 {
-    const auto log_directory = std::filesystem::temp_directory_path() / "im-cpp-cli-check-tests";
+    const auto log_directory = std::filesystem::temp_directory_path() / "cli-check-tests";
     std::filesystem::remove_all(log_directory);
     const std::vector<std::string_view> arguments{"check", "--log-level", "DEBUG"};
     std::ostringstream output;
     std::ostringstream error;
-    im_cpp::core::Logger logger("im-cpp-cli-test");
+    im_cpp::core::Logger logger("cli-test");
 
     const int result = im_cpp::app::runCli(arguments, output, error, logger, log_directory);
 
     REQUIRE(result == 0);
     REQUIRE(output.str() == "I'm C++ OK\n");
     REQUIRE(error.str().empty());
-    std::ifstream logFile(log_directory / "im-cpp-cli-test.log");
+    std::ifstream logFile(log_directory / "cli-test.log");
     const std::string logContents((std::istreambuf_iterator<char>(logFile)), std::istreambuf_iterator<char>());
     REQUIRE(logContents.contains("Application started"));
     REQUIRE(logContents.contains("Application closed"));
@@ -40,7 +40,7 @@ TEST_CASE("runCli_Should_PrintVersion")
     const std::vector<std::string_view> arguments{"--version"};
     std::ostringstream output;
     std::ostringstream error;
-    im_cpp::core::Logger logger("im-cpp-cli-version-test");
+    im_cpp::core::Logger logger("cli-version-test");
 
     const int result = im_cpp::app::runCli(arguments, output, error, logger);
 
@@ -51,12 +51,12 @@ TEST_CASE("runCli_Should_PrintVersion")
 
 TEST_CASE("runCli_Should_InvokeGuiRunnerWhenGuiCommandIsSelected")
 {
-    const auto log_directory = std::filesystem::temp_directory_path() / "im-cpp-cli-gui-tests";
+    const auto log_directory = std::filesystem::temp_directory_path() / "cli-gui-tests";
     std::filesystem::remove_all(log_directory);
     const std::vector<std::string_view> arguments{"gui"};
     std::ostringstream output;
     std::ostringstream error;
-    im_cpp::core::Logger logger("im-cpp-cli-gui-test");
+    im_cpp::core::Logger logger("cli-gui-test");
     bool guiWasRun = false;
     spdlog::level::level_enum guiLogLevel = spdlog::level::off;
     constexpr int expectedGuiExitCode = 7;
@@ -82,7 +82,7 @@ TEST_CASE("runCli_Should_InvokeGuiRunnerWhenGuiCommandIsSelected")
     REQUIRE(guiLogLevel == spdlog::level::debug);
 #endif
     REQUIRE(error.str().empty());
-    std::ifstream logFile(log_directory / "im-cpp-cli-gui-test.log");
+    std::ifstream logFile(log_directory / "cli-gui-test.log");
     const std::string logContents((std::istreambuf_iterator<char>(logFile)), std::istreambuf_iterator<char>());
     REQUIRE(logContents.contains("Application started"));
     REQUIRE(logContents.contains("Application closed"));
@@ -91,12 +91,12 @@ TEST_CASE("runCli_Should_InvokeGuiRunnerWhenGuiCommandIsSelected")
 
 TEST_CASE("runCli_Should_RespectExplicitGuiLogLevel")
 {
-    const auto log_directory = std::filesystem::temp_directory_path() / "im-cpp-cli-gui-log-level-tests";
+    const auto log_directory = std::filesystem::temp_directory_path() / "cli-gui-log-level-tests";
     std::filesystem::remove_all(log_directory);
     const std::vector<std::string_view> arguments{"gui", "--log-level", "INFO"};
     std::ostringstream output;
     std::ostringstream error;
-    im_cpp::core::Logger logger("im-cpp-cli-gui-log-level-test");
+    im_cpp::core::Logger logger("cli-gui-log-level-test");
     spdlog::level::level_enum guiLogLevel = spdlog::level::off;
 
     const int result = im_cpp::app::runCli(
@@ -119,12 +119,12 @@ TEST_CASE("runCli_Should_RespectExplicitGuiLogLevel")
 
 TEST_CASE("runCli_Should_LogGuiRunnerException")
 {
-    const auto log_directory = std::filesystem::temp_directory_path() / "im-cpp-cli-gui-exception-tests";
+    const auto log_directory = std::filesystem::temp_directory_path() / "cli-gui-exception-tests";
     std::filesystem::remove_all(log_directory);
     const std::vector<std::string_view> arguments{"gui"};
     std::ostringstream output;
     std::ostringstream error;
-    im_cpp::core::Logger logger("im-cpp-cli-gui-exception-test");
+    im_cpp::core::Logger logger("cli-gui-exception-test");
 
     const int result = im_cpp::app::runCli(
         arguments,
@@ -135,7 +135,7 @@ TEST_CASE("runCli_Should_LogGuiRunnerException")
         [](const std::shared_ptr<spdlog::logger> &, const std::shared_ptr<im_cpp::core::GuiLogSink> &) -> int
         { throw std::runtime_error("GUI failure"); });
 
-    std::ifstream logFile(log_directory / "im-cpp-cli-gui-exception-test.log");
+    std::ifstream logFile(log_directory / "cli-gui-exception-test.log");
     const std::string logContents((std::istreambuf_iterator<char>(logFile)), std::istreambuf_iterator<char>());
     REQUIRE(result == 1);
     REQUIRE(logContents.contains("[error]"));
@@ -146,7 +146,7 @@ TEST_CASE("runCli_Should_LogGuiRunnerException")
 
 TEST_CASE("runCli_Should_ReportLoggerSetupFailure")
 {
-    const auto log_path = std::filesystem::temp_directory_path() / "im-cpp-cli-logger-setup-failure";
+    const auto log_path = std::filesystem::temp_directory_path() / "cli-logger-setup-failure";
     const auto blocker_path = log_path / "file-blocker";
     std::filesystem::remove_all(log_path);
     std::filesystem::create_directories(log_path);
@@ -154,7 +154,7 @@ TEST_CASE("runCli_Should_ReportLoggerSetupFailure")
     const std::vector<std::string_view> arguments{"check"};
     std::ostringstream output;
     std::ostringstream error;
-    im_cpp::core::Logger logger("im-cpp-cli-logger-setup-failure-test");
+    im_cpp::core::Logger logger("cli-logger-setup-failure-test");
 
     const int result = im_cpp::app::runCli(arguments, output, error, logger, blocker_path);
 
@@ -169,7 +169,7 @@ TEST_CASE("runCli_Should_RejectInvalidLogLevel")
     const std::vector<std::string_view> arguments{"check", "--log-level", "35"};
     std::ostringstream output;
     std::ostringstream error;
-    im_cpp::core::Logger logger("im-cpp-cli-invalid-level-test");
+    im_cpp::core::Logger logger("cli-invalid-level-test");
 
     const int result = im_cpp::app::runCli(arguments, output, error, logger);
 

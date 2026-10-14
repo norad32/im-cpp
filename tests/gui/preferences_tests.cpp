@@ -17,7 +17,7 @@ constexpr float expectedLogPanelHeight = 268.5F;
 
 TEST_CASE("loadPreferences_Should_UseDefaultsWhenFileIsMissing")
 {
-    const auto preferencesFile = std::filesystem::temp_directory_path() / "im-cpp-pref-defaults" / "preferences.conf";
+    const auto preferencesFile = std::filesystem::temp_directory_path() / "pref-defaults" / "preferences.conf";
     std::filesystem::remove_all(preferencesFile.parent_path());
 
     const auto preferences = im_cpp::gui::loadPreferences(preferencesFile);
@@ -31,7 +31,7 @@ TEST_CASE("loadPreferences_Should_UseDefaultsWhenFileIsMissing")
 
 TEST_CASE("savePreferences_Should_RoundTripSettings")
 {
-    const auto configDirectory = std::filesystem::temp_directory_path() / "im-cpp-pref-roundtrip";
+    const auto configDirectory = std::filesystem::temp_directory_path() / "pref-roundtrip";
     const auto preferencesFile = configDirectory / "im-cpp" / "preferences.conf";
     std::filesystem::remove_all(configDirectory);
     const im_cpp::gui::Preferences expected{
@@ -54,8 +54,8 @@ TEST_CASE("savePreferences_Should_RoundTripSettings")
 
 TEST_CASE("savePreferences_Should_ReplaceSymlinkWithoutWritingToItsTarget")
 {
-    const auto configDirectory = std::filesystem::temp_directory_path() / "im-cpp-pref-symlink";
-    const auto externalFile = std::filesystem::temp_directory_path() / "im-cpp-pref-symlink-target";
+    const auto configDirectory = std::filesystem::temp_directory_path() / "pref-symlink";
+    const auto externalFile = std::filesystem::temp_directory_path() / "pref-symlink-target";
     std::filesystem::remove_all(configDirectory);
     std::filesystem::remove(externalFile);
     const auto preferencesDirectory = configDirectory / "im-cpp";
@@ -79,7 +79,7 @@ TEST_CASE("savePreferences_Should_ReplaceSymlinkWithoutWritingToItsTarget")
 
 TEST_CASE("savePreferences_Should_ReplaceExistingPreferences")
 {
-    const auto preferencesDirectory = std::filesystem::temp_directory_path() / "im-cpp-pref-existing";
+    const auto preferencesDirectory = std::filesystem::temp_directory_path() / "pref-existing";
     const auto preferencesFile = preferencesDirectory / "preferences.conf";
     std::filesystem::remove_all(preferencesDirectory);
 

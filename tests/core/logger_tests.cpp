@@ -11,16 +11,16 @@
 
 TEST_CASE("Logger_Should_WriteLogToRotatingFile")
 {
-    const auto log_directory = std::filesystem::temp_directory_path() / "im-cpp-logger-tests";
+    const auto log_directory = std::filesystem::temp_directory_path() / "logger-tests";
     std::filesystem::remove_all(log_directory);
 
-    im_cpp::core::Logger logger("im-cpp-test");
+    im_cpp::core::Logger logger("test");
     logger.setup(im_cpp::core::LogLevel::debug, log_directory);
     const auto guiSink = logger.attachGuiSink();
     SPDLOG_LOGGER_INFO(logger.get(), "test log message");
     logger.shutdown();
 
-    std::ifstream log_file(log_directory / "im-cpp-test.log");
+    std::ifstream log_file(log_directory / "test.log");
     const std::string contents((std::istreambuf_iterator<char>(log_file)), std::istreambuf_iterator<char>());
     const auto guiEntries = guiSink->drain();
     REQUIRE(contents.contains("test log message"));
@@ -38,10 +38,10 @@ TEST_CASE("Logger_Should_WriteLogToRotatingFile")
 
 TEST_CASE("Logger_Should_UseSourceFilenameForDebugAndTraceAndDisableThemInRelease")
 {
-    const auto log_directory = std::filesystem::temp_directory_path() / "im-cpp-logger-level-tests";
+    const auto log_directory = std::filesystem::temp_directory_path() / "logger-level-tests";
     std::filesystem::remove_all(log_directory);
 
-    im_cpp::core::Logger logger("im-cpp-level-test");
+    im_cpp::core::Logger logger("level-test");
     logger.setup(im_cpp::core::LogLevel::trace, log_directory);
     const auto guiSink = logger.attachGuiSink();
     logger.setLevel(im_cpp::core::LogLevel::trace);
