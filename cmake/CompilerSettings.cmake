@@ -5,7 +5,6 @@ set(WARNING_OPTIONS
     -Wpedantic
     -Wall
     -Wextra
-    -Wabi
     -Wmissing-declarations
     -Wconversion
     -Wshadow
