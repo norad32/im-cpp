@@ -1,5 +1,5 @@
 #include "app/cli.h"
-#include "core/application_info.h"
+#include "core/app_info.h"
 #include "core/gui_log_sink.h"
 #include "core/log_level.h"
 #include "core/logger.h"

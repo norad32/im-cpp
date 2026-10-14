@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/application_metadata.h"
+#include "core/app_metadata.h"
 
 namespace im_cpp::core
 {

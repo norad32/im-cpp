@@ -115,7 +115,7 @@ jobs:
         run: find src tests -type f \( -name '*.cpp' -o -name '*.h' \) -print0 | xargs -0 clang-format --dry-run --Werror
 
       - name: Check CMake formatting
-        run: cmake-format --check CMakeLists.txt cmake/CompilerSettings.cmake cmake/GuiDependencies.cmake cmake/DependencyPins.cmake cmake/InstallRules.cmake cmake/applicationConfig.cmake.in
+        run: cmake-format --check CMakeLists.txt cmake/CompilerSettings.cmake cmake/GuiDependencies.cmake cmake/DependencyPins.cmake cmake/InstallRules.cmake cmake/appConfig.cmake.in src/core/CMakeLists.txt src/app/CMakeLists.txt src/gui/CMakeLists.txt tests/CMakeLists.txt
 
       - name: Check dependency installer syntax
         run: bash -n scripts/install-build-dependencies.sh

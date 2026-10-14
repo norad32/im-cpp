@@ -1,14 +1,14 @@
 include(CMakePackageConfigHelpers)
 
 install(
-    TARGETS application_options core im_app
+    TARGETS application_options core app
     EXPORT ${CMAKE_PACKAGE_NAME}Targets
     ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT Development
     LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT Development)
 
 if(BUILD_GUI)
     install(
-        TARGETS guii imgui
+        TARGETS gui imgui
         EXPORT ${CMAKE_PACKAGE_NAME}Targets
         ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT Development
         LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT Development)
@@ -63,7 +63,7 @@ install(
     COMPONENT Development)
 
 configure_package_config_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/${CMAKE_PACKAGE_NAME}Config.cmake.in"
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/appConfig.cmake.in"
     "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PACKAGE_NAME}Config.cmake"
     INSTALL_DESTINATION "${INSTALL_CMAKEDIR}")
 write_basic_package_version_file(

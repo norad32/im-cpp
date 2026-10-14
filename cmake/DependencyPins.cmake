@@ -5,7 +5,7 @@ function(
     commit)
     string(TOLOWER "${dependency_name}" dependency_prefix)
     set(${dependency_prefix}_SOURCE_DIR
-        "${CMAKE_CURRENT_SOURCE_DIR}/third_party/${dependency_prefix}"
+        "${PROJECT_SOURCE_DIR}/third_party/${dependency_prefix}"
         CACHE PATH "Path to ${dependency_name} sources")
     if(EXISTS "${${dependency_prefix}_SOURCE_DIR}/CMakeLists.txt")
         set(FETCHCONTENT_SOURCE_DIR_${dependency_prefix}
