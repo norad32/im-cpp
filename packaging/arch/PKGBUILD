@@ -1,27 +1,27 @@
-pkgbase=im-cpp
-pkgname=('im-cpp' 'im-cpp-gui' 'im-cpp-devel')
-pkgver=0.1.0
-pkgrel=1
-pkgdesc='C++23 port of the im application'
-arch=('x86_64' 'aarch64')
-url='https://github.com/norad32/im-cpp'
-license=('MIT')
-makedepends=('cmake>=3.25' 'gcc>=14' 'ninja' 'pkgconf' 'glfw' 'mesa')
-source=("im-cpp-${pkgver}.tar.gz::https://github.com/norad32/im-cpp/archive/refs/tags/v${pkgver}.tar.gz")
+pkgbase=@DISTRIBUTION_NAME@
+pkgname=('@ARCH_RUNTIME_PACKAGE_NAME@' '@ARCH_GUI_PACKAGE_NAME@' '@ARCH_DEVELOPMENT_PACKAGE_NAME@')
+pkgver=@PROJECT_VERSION@
+pkgrel=@ARCH_PACKAGE_RELEASE@
+pkgdesc='@PROJECT_DESCRIPTION@'
+arch=(@ARCH_PACKAGE_ARCHITECTURES@)
+url='@PROJECT_HOMEPAGE_URL@'
+license=('@PROJECT_LICENSE@')
+makedepends=(@ARCH_BUILD_DEPENDENCIES@)
+source=("@DISTRIBUTION_NAME@-${pkgver}.tar.gz::@PROJECT_SOURCE_ARCHIVE_URL@")
 sha256sums=('SKIP')
 
 build() {
-    cmake -S "${srcdir}/im-cpp-${pkgver}" -B "${srcdir}/build-headless" -G Ninja \
+    cmake -S "${srcdir}/@DISTRIBUTION_NAME@-${pkgver}" -B "${srcdir}/build-headless" -G Ninja \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_CXX_COMPILER=g++ \
     -DCMAKE_INSTALL_PREFIX=/usr \
     -DBUILD_TESTS=OFF \
     -DBUILD_GUI=OFF \
     -DINSTALL_GUI=OFF \
-    -DPACKAGE_NAME=im-cpp
+    -DPACKAGE_NAME=@DISTRIBUTION_NAME@
     cmake --build "${srcdir}/build-headless" --parallel
     
-    cmake -S "${srcdir}/im-cpp-${pkgver}" -B "${srcdir}/build-gui" -G Ninja \
+    cmake -S "${srcdir}/@DISTRIBUTION_NAME@-${pkgver}" -B "${srcdir}/build-gui" -G Ninja \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_CXX_COMPILER=g++ \
     -DCMAKE_INSTALL_PREFIX=/usr \
@@ -29,25 +29,28 @@ build() {
     -DBUILD_GUI=ON \
     -DINSTALL_GUI=ON \
     -DBUILD_GUI_RUNTIME=ON \
-    -DPACKAGE_NAME=im-cpp
+    -DPACKAGE_NAME=@DISTRIBUTION_NAME@
     
     cmake --build "${srcdir}/build-gui" --parallel
 }
 
-package_im-cpp() {
+package_@ARCH_RUNTIME_PACKAGE_NAME@() {
+    pkgdesc='@RUNTIME_PACKAGE_DESCRIPTION@'
     DESTDIR="${pkgdir}" cmake --install "${srcdir}/build-headless" --prefix /usr --component Runtime
-    install -Dm644 "${srcdir}/im-cpp-${pkgver}/LICENSE" "${pkgdir}/usr/share/licenses/im-cpp/LICENSE"
+    install -Dm644 "${srcdir}/@DISTRIBUTION_NAME@-${pkgver}/LICENSE" "${pkgdir}/usr/share/licenses/@ARCH_RUNTIME_PACKAGE_NAME@/LICENSE"
 }
 
-package_im-cpp-gui() {
-    depends=('glfw' 'mesa')
+package_@ARCH_GUI_PACKAGE_NAME@() {
+    pkgdesc='@GUI_PACKAGE_DESCRIPTION@'
+    depends=(@ARCH_GUI_PACKAGE_DEPENDENCIES@)
     DESTDIR="${pkgdir}" cmake --install "${srcdir}/build-gui" --prefix /usr --component Gui
-    install -Dm644 "${srcdir}/im-cpp-${pkgver}/LICENSE" "${pkgdir}/usr/share/licenses/im-cpp-gui/LICENSE"
+    install -Dm644 "${srcdir}/@DISTRIBUTION_NAME@-${pkgver}/LICENSE" "${pkgdir}/usr/share/licenses/@ARCH_GUI_PACKAGE_NAME@/LICENSE"
 }
 
-package_im-cpp-devel() {
-    depends=('im-cpp' 'im-cpp-gui')
+package_@ARCH_DEVELOPMENT_PACKAGE_NAME@() {
+    pkgdesc='@DEVELOPMENT_PACKAGE_DESCRIPTION@'
+    depends=(@ARCH_DEVELOPMENT_PACKAGE_DEPENDENCIES@)
     DESTDIR="${pkgdir}" cmake --install "${srcdir}/build-headless" --prefix /usr --component Development
     DESTDIR="${pkgdir}" cmake --install "${srcdir}/build-gui" --prefix /usr --component Development
-    install -Dm644 "${srcdir}/im-cpp-${pkgver}/LICENSE" "${pkgdir}/usr/share/licenses/im-cpp-devel/LICENSE"
+    install -Dm644 "${srcdir}/@DISTRIBUTION_NAME@-${pkgver}/LICENSE" "${pkgdir}/usr/share/licenses/@ARCH_DEVELOPMENT_PACKAGE_NAME@/LICENSE"
 }

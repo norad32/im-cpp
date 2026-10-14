@@ -5,7 +5,7 @@ set(_PACKAGE_NAME "@CMAKE_PACKAGE_NAME@")
 include(CMakeFindDependencyMacro)
 find_dependency(
     spdlog
-    1.17.0
+    @SPDLOG_PACKAGE_VERSION@
     EXACT
     CONFIG)
 set(${_PACKAGE_NAME}_app_FOUND TRUE)

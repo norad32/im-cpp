@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 3.25)
-
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/ProjectMetadata.cmake")
+
+cmake_minimum_required(VERSION ${MINIMUM_CMAKE_VERSION})
 
 project(
     "${CMAKE_PACKAGE_NAME}"
@@ -9,7 +9,6 @@ project(
     HOMEPAGE_URL "${PROJECT_HOMEPAGE_URL}"
     LANGUAGES CXX)
 
-set(MINIMUM_GCC_VERSION 14)
 if(NOT
    CMAKE_CXX_COMPILER_ID
    STREQUAL
@@ -40,7 +39,7 @@ set(PACKAGE_NAME
     CACHE STRING "CPack package name")
 set_property(CACHE PACKAGE_NAME PROPERTY STRINGS "${DISTRIBUTION_NAME}"
                                          "${DISTRIBUTION_NAME}-gui")
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD ${PROJECT_CXX_STANDARD})
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -55,10 +54,14 @@ set(GENERATED_METADATA_HEADER "${GENERATED_INCLUDE_DIR}/core/app_metadata.h")
 file(MAKE_DIRECTORY "${GENERATED_INCLUDE_DIR}/core")
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/app_metadata.h.in"
                "${GENERATED_METADATA_HEADER}" @ONLY)
+set(OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/packaging")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/GeneratePackagingMetadata.cmake")
 
 add_library(application_options INTERFACE)
+
 set_target_properties(application_options PROPERTIES EXPORT_NAME options)
-target_compile_features(application_options INTERFACE cxx_std_23)
+target_compile_features(application_options
+                        INTERFACE cxx_std_${PROJECT_CXX_STANDARD})
 set_target_properties(application_options PROPERTIES CXX_EXTENSIONS OFF)
 target_include_directories(
     application_options
@@ -69,7 +72,7 @@ target_include_directories(
 
 find_package(
     spdlog
-    1.17.0
+    ${SPDLOG_PACKAGE_VERSION}
     EXACT
     CONFIG
     QUIET)
@@ -89,7 +92,7 @@ endif()
 
 find_package(
     CLI11
-    2.4.2
+    ${CLI11_PACKAGE_VERSION}
     EXACT
     CONFIG
     QUIET)

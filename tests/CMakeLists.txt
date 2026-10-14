@@ -3,7 +3,7 @@ include(FetchContent)
 
 find_package(
     Catch2
-    3.8.1
+    ${CATCH2_PACKAGE_VERSION}
     CONFIG
     QUIET
     COMPONENTS Catch2WithMain)
