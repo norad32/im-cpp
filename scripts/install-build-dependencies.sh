@@ -15,6 +15,7 @@ install_apt() {
     local package
     local -a required_packages=(
         build-essential
+        catch2
         g++-14
         cmake
         ninja-build
@@ -49,6 +50,7 @@ install_pacman() {
     local package
     local -a required_packages=(
         base-devel
+        catch2
         cmake
         ninja
         gcc

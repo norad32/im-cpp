@@ -38,7 +38,8 @@
       "inherits": "debug",
       "binaryDir": "${sourceDir}/build/debug-headless",
       "cacheVariables": {
-        "BUILD_GUI": "OFF"
+        "BUILD_GUI": "OFF",
+        "INSTALL_GUI": "OFF"
       }
     },
     {

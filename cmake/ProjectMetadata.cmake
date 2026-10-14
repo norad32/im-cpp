@@ -6,7 +6,6 @@ set(PROJECT_CXX_STANDARD 23)
 set(PROJECT_DESCRIPTION "C++23 starter template")
 set(SPDLOG_PACKAGE_VERSION "1.17.0")
 set(CLI11_PACKAGE_VERSION "2.4.2")
-set(CATCH2_PACKAGE_VERSION "3.8.1")
 set(PROJECT_HOMEPAGE_URL "https://github.com/norad32/im-cpp")
 set(PROJECT_SOURCE_ARCHIVE_URL
     "${PROJECT_HOMEPAGE_URL}/archive/refs/tags/v${PROJECT_VERSION}.tar.gz")
