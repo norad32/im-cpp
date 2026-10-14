@@ -2,97 +2,86 @@
 
 [![Build and test](https://github.com/norad32/im-cpp/actions/workflows/build.yml/badge.svg)](https://github.com/norad32/im-cpp/actions/workflows/build.yml)
 
-A C++23 starter template. It provides a command-line interface and optional Dear ImGui desktop GUI. The project targets Linux and requires GCC 14 or newer.
+A Linux C++23 starter application with a command-line interface and optional Dear ImGui desktop GUI. The project currently requires GCC 14 or newer.
 
-## Build and run
+## Prerequisites
 
-Requirements include CMake 3.25 or newer, Ninja, and GCC 14 or newer. GUI builds also need GLFW 3 and OpenGL development libraries. Install supported tools on apt- or pacman-based Linux distributions with `./scripts/install-build-dependencies.sh`.
+- CMake 3.25 or newer and Ninja
+- GCC 14 or newer
+- For tests: Catch2 (`BUILD_TESTS` is enabled by the debug and release presets)
+- For GUI builds: GLFW 3 and OpenGL development libraries
 
-Build and test the headless configuration:
+The dependency helper supports apt- and pacman-based Linux distributions:
 
 ```sh
-cmake --preset release-headless
+./scripts/install-build-dependencies.sh
+```
+
+On Ubuntu 24.04, configure with the versioned compiler installed by the helper:
+
+```sh
+cmake --preset release-headless -DCMAKE_CXX_COMPILER=g++-14
 cmake --build --preset release-headless
 ctest --preset release-headless
 ./build/release-headless/im-cpp check
 ```
 
-The presets use `g++`. If your GCC 14+ compiler has a versioned name, pass it when configuring, for example `-DCMAKE_CXX_COMPILER=g++-14`. CMake caches the compiler choice, so use a fresh build directory when switching compilers.
+Compiler selection is cached by CMake. Use a fresh build directory if you change compilers.
 
-Available presets are `debug`, `debug-gui`, `debug-headless`, `release-gui`, and `release-headless`. GUI support is enabled by default. Use `-DBUILD_GUI=OFF` for a headless build. `BUILD_TESTS` controls the Catch2 test suite, and `ENABLE_CLANG_TIDY` enables clang-tidy during compilation. Compiler warnings are treated as errors.
+## Build configurations
 
-Use `im-cpp --version` to print the version and `im-cpp --log-level DEBUG check` to set the logging level. In GUI builds, run `im-cpp gui` or start without a command to open the interface. GUI preferences are saved as `preferences.conf` under `$XDG_CONFIG_HOME/im-cpp/`, or `$HOME/.config/im-cpp/` when `XDG_CONFIG_HOME` is unset or relative. If neither location is available, preferences use defaults and are not saved.
+| Preset | Purpose |
+| --- | --- |
+| `debug` / `debug-gui` | Debug GUI build with coverage and clang-tidy enabled by default |
+| `debug-headless` | Debug build without GUI |
+| `release-gui` | Release build with GUI support and a separate `im-cpp-gui` executable |
+| `release-headless` | Release build without GUI |
 
-CMake finds spdlog, CLI11, and Catch2 in installed packages or fetches pinned revisions for spdlog and CLI11. It fetches Dear ImGui for GUI builds.
+Build and test any preset with `cmake --build --preset <preset>` and `ctest --preset <preset>`. Direct CMake configuration defaults to `BUILD_TESTS=OFF`; presets enable tests. Other options include `BUILD_GUI`, `BUILD_GUI_RUNTIME`, `INSTALL_GUI`, `ENABLE_COVERAGE`, and `ENABLE_CLANG_TIDY`. Pass `-DENABLE_CLANG_TIDY=OFF` when configuring a debug preset if clang-tidy is unavailable.
 
-## Develop and test
+## Dependencies
 
-Run the suite with `ctest --preset release-headless` or `ctest --preset release-gui`. Pushes build and test the headless Release preset. Pull requests do the same and additionally generate a source coverage summary; same-repository pull requests receive it as a comment, and all pull requests upload it as an artifact.
+CMake uses matching installed versions of spdlog and CLI11 when available, and otherwise fetches pinned revisions. Dear ImGui is fetched for GUI builds. Catch2 is an installed dependency when tests are enabled. GUI builds also require system GLFW and OpenGL development packages.
+
+## Run
+
+The command-line executable supports `check` and `--version`. GUI-enabled builds can open the interface with `im-cpp gui` or by starting without a command. Release GUI builds also provide the standalone `im-cpp-gui` executable.
+
+Preferences are stored below an absolute `$XDG_CONFIG_HOME/im-cpp/`, falling back to `$HOME/.config/im-cpp/` when `XDG_CONFIG_HOME` is unset or relative. Logs use `$XDG_STATE_HOME/im-cpp/logs/` when `XDG_STATE_HOME` is absolute; otherwise they fall back to `$HOME/.local/state/im-cpp/logs/`.
+
+## VS Code
+
+The `.vscode` directory provides build, clean, test, and launch tasks. Install the recommended extensions, run **Install build dependencies**, then choose **Build** or a matching debug launch configuration.
 
 ## Install and package
 
-Prebuilt Linux archives and Debian and Arch packages are attached to each [GitHub release](https://github.com/norad32/im-cpp/releases). The archives install under `/usr` and contain the headless or GUI runtime executable; the GUI executable is `im-cpp-gui` and requires GLFW and OpenGL runtime libraries.
-
-To install the Debian headless packages, download the `headless-*.deb` assets and run:
+Install locally with:
 
 ```sh
-sudo apt install ./headless-*.deb
+cmake --install build/release-headless --prefix <install-prefix>
 ```
 
-To install the GUI packages, download the `gui-*.deb` assets and run:
+The `Runtime` component installs the executable and the `Development` component installs headers, libraries, and CMake package files. CPack generates Debian component packages; release automation also stages Linux archives and Arch packages. Review generated package dependencies and published release assets before relying on them for deployment; the Arch release workflow still needs a tagged-run verification.
 
-```sh
-sudo apt install ./gui-*.deb
-```
-
-The GUI set includes the `im-cpp-gui` runtime package and its runtime dependencies. Install all matching assets together so apt can resolve package dependencies. The headless set contains Runtime and Development packages; the GUI set additionally contains the GUI executable package.
-
-On Arch Linux, download the `.pkg.tar.zst` assets and install the split runtime, GUI, and development packages with:
-
-```sh
-sudo pacman -U ./im-cpp-*.pkg.tar.zst
-```
-
-To install a prebuilt archive instead, extract it into the filesystem root:
-
-```sh
-sudo tar -C / -xzf im-cpp-headless-<version>-linux-x86_64.tar.gz
-```
-
-Use `im-cpp-gui-<version>-linux-x86_64.tar.gz` for the GUI archive. Both archives install executables under `/usr/bin` and the license under `/usr/share/licenses/im-cpp`. The GUI archive includes both `im-cpp` and `im-cpp-gui`.
-
-To build packages locally, configure and build the desired release preset. CPack generates Debian packages; the generated Arch `PKGBUILD` can be built on Arch Linux with `makepkg --syncdeps --cleanbuild` from its directory.
-
-```sh
-cmake --preset release-headless
-cmake --build --preset release-headless
-cpack --config build/release-headless/CPackConfig.cmake -G DEB -B build/packages/headless
-
-cmake --preset release-gui
-cmake --build --preset release-gui
-cpack --config build/release-gui/CPackConfig.cmake -G DEB -B build/packages/gui
-```
-
-The GUI preset builds a separate `im-cpp-gui` runtime. Its Debian packages include Development and Runtime components, plus Gui for the separate GUI executable.
-
-Install a build locally with `cmake --install build/release-headless --prefix <install-prefix>`. The Development component includes libraries, headers, and CMake package files. Runtime installs the executable.
-
-CMake consumers can request the application component and link the exported target:
+CMake consumers can request the exported application target:
 
 ```cmake
-find_package(application CONFIG REQUIRED COMPONENTS app)
-target_link_libraries(my_target PRIVATE application::app)
+find_package(im-cpp CONFIG REQUIRED COMPONENTS app)
+target_link_libraries(my_target PRIVATE im-cpp::app)
 ```
+
+The package-consumer fixture is exercised by CTest when tests are enabled.
 
 ## Project layout
 
-```text
-.github/workflows/   CI checks
-cmake/               Build, dependency, and packaging configuration
-scripts/             Build dependency installer
-src/                 Application, CLI, core, and GUI implementation
-tests/               Unit tests and package consumer
-```
+- `.github/workflows/`: build, test, coverage, and release automation
+- `.vscode/`: editor tasks and launch configurations
+- `assets/`: desktop integration and icons
+- `cmake/`: build configuration, dependency pins, install rules, and packaging
+- `packaging/`: Debian and Arch package metadata templates
+- `scripts/`: dependency installation and CMake formatting helpers
+- `src/`: application, CLI, core, and GUI implementation
+- `tests/`: unit tests and installed-package consumer fixture
 
 ## Credits
 
@@ -103,7 +92,6 @@ tests/               Unit tests and package consumer
 | [CLI11](https://github.com/CLIUtils/CLI11) | Command-line parsing | BSD-3-Clause |
 | [spdlog](https://github.com/gabime/spdlog) | Logging | MIT |
 | [Catch2](https://github.com/catchorg/Catch2) | Testing | Boost Software License 1.0 |
-| [CMake](https://cmake.org/) | Build configuration and packaging | BSD-3-Clause |
 
 ## License
 

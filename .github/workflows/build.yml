@@ -12,6 +12,10 @@ permissions:
 jobs:
   build-and-test:
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        preset: [release-headless, release-gui]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
@@ -20,14 +24,14 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential catch2 g++-14 libglfw3-dev libgl1-mesa-dev ninja-build pkg-config
 
-      - name: Configure Release
-        run: cmake --preset release-headless -DCMAKE_CXX_COMPILER=g++-14
+      - name: Configure
+        run: cmake --preset "${{ matrix.preset }}" -DCMAKE_CXX_COMPILER=g++-14
 
-      - name: Build Release
-        run: cmake --build --preset release-headless --parallel 2
+      - name: Build
+        run: cmake --build --preset "${{ matrix.preset }}" --parallel 2
 
-      - name: Test Release
-        run: ctest --preset release-headless
+      - name: Test
+        run: ctest --preset "${{ matrix.preset }}"
 
   coverage:
     if: github.event_name == 'pull_request'

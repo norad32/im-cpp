@@ -92,7 +92,8 @@ public:
 [[nodiscard]] std::filesystem::path defaultLogDirectory()
 {
     if (const char * stateDirectory = std::getenv("XDG_STATE_HOME");
-        stateDirectory != nullptr && !std::string_view(stateDirectory).empty())
+        stateDirectory != nullptr && *stateDirectory != '\0' &&
+        std::filesystem::path(stateDirectory).is_absolute())
     {
         return std::filesystem::path(stateDirectory) / std::string(applicationName()) / "logs";
     }

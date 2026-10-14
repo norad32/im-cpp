@@ -1,6 +1,7 @@
 #include "core/log_level.h"
 #include "core/logger.h"
 #include <catch2/catch_test_macros.hpp>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <iterator>
@@ -8,6 +9,49 @@
 #include <spdlog/spdlog.h>
 #include <string>
 #include <string_view>
+
+TEST_CASE("Logger_Should_IgnoreRelativeXdgStateHome")
+{
+    const auto log_directory = std::filesystem::temp_directory_path() / "logger-relative-xdg-state";
+    const auto working_directory = std::filesystem::current_path();
+    const auto relative_directory = working_directory / "relative-state-home";
+    std::filesystem::remove_all(log_directory);
+    std::filesystem::remove_all(relative_directory);
+    const char * previous_home_value = std::getenv("HOME");
+    const char * previous_state_value = std::getenv("XDG_STATE_HOME");
+    const bool had_previous_home = previous_home_value != nullptr;
+    const bool had_previous_state = previous_state_value != nullptr;
+    const std::string previous_home = had_previous_home ? previous_home_value : "";
+    const std::string previous_state = had_previous_state ? previous_state_value : "";
+    setenv("HOME", log_directory.c_str(), 1);
+    setenv("XDG_STATE_HOME", "relative-state-home", 1);
+
+    im_cpp::core::Logger logger("relative-state-test");
+    logger.setup(im_cpp::core::defaultLogLevel());
+    const auto expected_path = log_directory / ".local" / "state" / "im-cpp" / "logs" / "relative-state-test.log";
+    const auto actual_path = logger.logFilePath();
+    logger.shutdown();
+    REQUIRE(actual_path == expected_path);
+
+    if (!had_previous_home)
+    {
+        unsetenv("HOME");
+    }
+    else
+    {
+        setenv("HOME", previous_home.c_str(), 1);
+    }
+    if (!had_previous_state)
+    {
+        unsetenv("XDG_STATE_HOME");
+    }
+    else
+    {
+        setenv("XDG_STATE_HOME", previous_state.c_str(), 1);
+    }
+    std::filesystem::remove_all(log_directory);
+    std::filesystem::remove_all(relative_directory);
+}
 
 TEST_CASE("Logger_Should_WriteLogToRotatingFile")
 {
@@ -26,7 +70,7 @@ TEST_CASE("Logger_Should_WriteLogToRotatingFile")
     REQUIRE(contents.contains("test log message"));
     REQUIRE(guiEntries.size() == 1);
 #ifdef IM_CPP_DEBUG_BUILD
-    constexpr std::string_view expectedLogSuffix{" [info] [logger_tests.cpp] [20] test log message\n"};
+    constexpr std::string_view expectedLogSuffix{" [info] [logger_tests.cpp] [64] test log message\n"};
 #else
     constexpr std::string_view expectedLogSuffix{" [info] test log message\n"};
 #endif

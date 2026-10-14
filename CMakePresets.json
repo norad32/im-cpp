@@ -6,7 +6,6 @@
       "hidden": true,
       "generator": "Ninja",
       "cacheVariables": {
-        "CMAKE_CXX_COMPILER": "g++",
         "CMAKE_BUILD_WITH_INSTALL_RPATH": "ON"
       }
     },

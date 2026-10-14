@@ -74,7 +74,7 @@ void drawLogPanelContents(core::GuiLogSink & logSink,
     drawLogEntries(entries, preferences, newEntriesWereAdded, followScroll);
 }
 
-}
+} // namespace
 
 float drawLogPanel(core::GuiLogSink & logSink,
                    Preferences & preferences,

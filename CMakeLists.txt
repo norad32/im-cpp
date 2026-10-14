@@ -1,6 +1,7 @@
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/ProjectMetadata.cmake")
+cmake_minimum_required(VERSION 3.25)
 
-cmake_minimum_required(VERSION ${MINIMUM_CMAKE_VERSION})
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/ProjectMetadata.cmake")
+set(APPLICATION_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 
 project(
     "${CMAKE_PACKAGE_NAME}"
@@ -15,7 +16,7 @@ if(NOT
    "GNU")
     message(
         FATAL_ERROR
-            "${DISTRIBUTION_NAME} requires GCC. Configure with -DCMAKE_CXX_COMPILER=g++."
+            "${DISTRIBUTION_NAME} requires GCC ${MINIMUM_GCC_VERSION} or newer. Select a matching CMAKE_CXX_COMPILER."
     )
 endif()
 if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS MINIMUM_GCC_VERSION)
@@ -27,7 +28,7 @@ endif()
 
 option(ENABLE_CLANG_TIDY
        "Run clang-tidy during compilation and fail on diagnostics" OFF)
-option(BUILD_TESTS "Build and register unit tests" ON)
+option(BUILD_TESTS "Build and register unit tests" OFF)
 option(ENABLE_COVERAGE "Instrument project code for Debug gcovr reports" OFF)
 option(BUILD_GUI "Build the ImGui GLFW/OpenGL desktop GUI" ON)
 option(BUILD_GUI_RUNTIME "Build the separately packaged GUI runtime executable"
@@ -72,7 +73,7 @@ set_target_properties(application_options PROPERTIES CXX_EXTENSIONS OFF)
 target_include_directories(
     application_options
     INTERFACE
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+        $<BUILD_INTERFACE:${APPLICATION_SOURCE_DIR}/src>
         $<BUILD_INTERFACE:${GENERATED_INCLUDE_DIR}>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${CMAKE_PACKAGE_NAME}>)
 
@@ -84,6 +85,12 @@ find_package(
     QUIET)
 if(NOT spdlog_FOUND)
     include(FetchContent)
+    set(SPDLOG_BUILD_TESTS
+        OFF
+        CACHE BOOL "Disable spdlog tests" FORCE)
+    set(SPDLOG_BUILD_EXAMPLE
+        OFF
+        CACHE BOOL "Disable spdlog examples" FORCE)
     set(SPDLOG_BUILD_TESTS
         OFF
         CACHE BOOL "Disable spdlog tests" FORCE)
@@ -118,8 +125,8 @@ endif()
 add_subdirectory(src/core)
 add_subdirectory(src/app)
 
-add_executable(${EXECUTABLE_NAME} src/main.cpp)
-target_link_libraries(${EXECUTABLE_NAME} PRIVATE cli)
+add_executable(${EXECUTABLE_NAME} "${APPLICATION_SOURCE_DIR}/src/main.cpp")
+target_link_libraries(${EXECUTABLE_NAME} PRIVATE app)
 if(BUILD_GUI)
     add_subdirectory(src/gui)
     target_link_libraries(${EXECUTABLE_NAME} PRIVATE gui)
@@ -128,11 +135,7 @@ else()
     target_compile_definitions(${EXECUTABLE_NAME} PRIVATE HAS_GUI=0)
 endif()
 
-set(compile_targets
-    core
-    app
-    cli
-    ${EXECUTABLE_NAME})
+set(compile_targets core app ${EXECUTABLE_NAME})
 
 if(BUILD_GUI)
     list(APPEND compile_targets gui)
@@ -146,16 +149,13 @@ endforeach()
 
 if(BUILD_TESTS)
     include(CTest)
-    add_subdirectory(tests "${CMAKE_BINARY_DIR}/unit-tests")
+    find_package(Catch2 CONFIG REQUIRED COMPONENTS Catch2WithMain)
+    add_subdirectory(tests "${PROJECT_BINARY_DIR}/unit-tests")
 endif()
 
 if(ENABLE_CLANG_TIDY)
     find_program(CLANG_TIDY_EXECUTABLE NAMES clang-tidy REQUIRED)
-    set(clang_tidy_targets
-        core
-        app
-        cli
-        ${EXECUTABLE_NAME})
+    set(clang_tidy_targets core app ${EXECUTABLE_NAME})
     if(BUILD_GUI)
         list(APPEND clang_tidy_targets gui)
         if(BUILD_GUI_RUNTIME)

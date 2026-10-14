@@ -24,6 +24,7 @@ install_apt() {
         gcovr
         libglfw3-dev
         libgl1-mesa-dev
+        libspdlog-dev
         pkg-config
         python3-pip
         pipx
@@ -58,6 +59,7 @@ install_pacman() {
         gcovr
         glfw-x11
         mesa
+        spdlog
         pkgconf
         python-pipx
     )
@@ -107,12 +109,16 @@ if ! command -v cmake-format >/dev/null 2>&1; then
     fi
 fi
 
-for tool in g++ cmake ninja; do
+for tool in cmake ninja; do
     if ! command -v "$tool" >/dev/null 2>&1; then
         printf 'Dependency installation completed, but %s is still not on PATH.\n' "$tool" >&2
         exit 1
     fi
 done
+if ! command -v g++-14 >/dev/null 2>&1 && ! command -v g++ >/dev/null 2>&1; then
+    printf '%s\n' "Dependency installation completed, but no GCC compiler is on PATH." >&2
+    exit 1
+fi
 
 for tool in g++ cmake ninja clang-tidy clang-format cmake-format gcovr; do
     if ! command -v "$tool" >/dev/null 2>&1; then

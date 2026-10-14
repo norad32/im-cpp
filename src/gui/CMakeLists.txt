@@ -22,7 +22,7 @@ set_target_properties(imgui PROPERTIES EXPORT_NAME imgui)
 target_include_directories(
     gui
     PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/src>
+        $<BUILD_INTERFACE:${APPLICATION_SOURCE_DIR}/src>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${CMAKE_PACKAGE_NAME}>
         $<BUILD_INTERFACE:${IMGUI_SOURCE_DIR}>
         $<BUILD_INTERFACE:${IMGUI_SOURCE_DIR}/backends>)
@@ -43,7 +43,8 @@ target_compile_definitions(
     gui
     PRIVATE
         APPLICATION_ICON_INSTALL_RELATIVE_PATH="${APPLICATION_ICON_INSTALL_RELATIVE_PATH}"
-        APPLICATION_ICON_SOURCE_PATH="${CMAKE_SOURCE_DIR}/assets/app_icon.xpm")
+        APPLICATION_ICON_SOURCE_PATH="${APPLICATION_SOURCE_DIR}/assets/app_icon.xpm"
+)
 if(ENABLE_COVERAGE)
     target_link_options(
         gui
@@ -54,7 +55,8 @@ if(ENABLE_COVERAGE)
 endif()
 
 if(BUILD_GUI_RUNTIME)
-    add_executable(${GUI_EXECUTABLE_NAME} ${CMAKE_SOURCE_DIR}/src/gui_main.cpp)
+    add_executable(${GUI_EXECUTABLE_NAME}
+                   ${APPLICATION_SOURCE_DIR}/src/gui_main.cpp)
     target_link_libraries(
         ${GUI_EXECUTABLE_NAME}
         PRIVATE app

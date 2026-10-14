@@ -53,3 +53,13 @@ add_test(NAME cli_version COMMAND ${EXECUTABLE_NAME} --version)
 if(BUILD_GUI_RUNTIME)
     add_test(NAME gui_cli_version COMMAND ${GUI_EXECUTABLE_NAME} --version)
 endif()
+
+add_test(
+    NAME package_consumer
+    COMMAND
+        ${CMAKE_COMMAND} -DSOURCE_DIR=${PROJECT_SOURCE_DIR}
+        -DMAIN_BINARY_DIR=${PROJECT_BINARY_DIR}
+        -DBINARY_DIR=${PROJECT_BINARY_DIR}/package-consumer
+        -DPREFIX_DIR=${PROJECT_BINARY_DIR}/package-consumer-prefix
+        -DCONFIG=$<CONFIG> -P
+        ${PROJECT_SOURCE_DIR}/tests/package-consumer/run-package-consumer.cmake)
