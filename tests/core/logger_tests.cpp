@@ -15,7 +15,7 @@ TEST_CASE("Logger_Should_WriteLogToRotatingFile")
     std::filesystem::remove_all(log_directory);
 
     im_cpp::core::Logger logger("test");
-    logger.setup(im_cpp::core::LogLevel::debug, log_directory);
+    logger.setup(im_cpp::core::defaultLogLevel(), log_directory);
     const auto guiSink = logger.attachGuiSink();
     SPDLOG_LOGGER_INFO(logger.get(), "test log message");
     logger.shutdown();

@@ -79,7 +79,7 @@ TEST_CASE("runCli_Should_InvokeGuiRunnerWhenGuiCommandIsSelected")
 #ifdef RELEASE
     REQUIRE(guiLogLevel == spdlog::level::info);
 #else
-    REQUIRE(guiLogLevel == spdlog::level::debug);
+    REQUIRE(guiLogLevel == spdlog::level::trace);
 #endif
     REQUIRE(error.str().empty());
     std::ifstream logFile(log_directory / "cli-gui-test.log");

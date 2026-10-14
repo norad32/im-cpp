@@ -1,6 +1,7 @@
 #include "gui/application.h"
 #include "core/gui_log_sink.h"
 #include "gui/preferences.h"
+#include "gui/theme.h"
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
 #include <algorithm>
@@ -8,20 +9,20 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdlib>
-#include <utility>
 #include <filesystem>
 #include <fstream>
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 #include <memory>
-#include <sstream>
 #include <spdlog/common.h>
 #include <spdlog/logger.h>
 #include <spdlog/spdlog.h>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <system_error>
+#include <utility>
 #include <vector>
 
 namespace im_cpp::gui
@@ -34,19 +35,6 @@ constexpr float initialMainWindowWidth = 520.0F;
 constexpr float initialMainWindowHeight = 250.0F;
 constexpr int initialApplicationWindowWidth = 1280;
 constexpr int initialApplicationWindowHeight = 800;
-constexpr int mutedGrayChannel = 166;
-constexpr int debugRedChannel = 140;
-constexpr int debugGreenChannel = 191;
-constexpr int maximumColorChannel = 255;
-constexpr int infoGreenChannel = 217;
-constexpr int warningGreenChannel = 204;
-constexpr int warningBlueChannel = 89;
-constexpr int errorGreenChannel = 102;
-constexpr int neutralGrayChannel = 217;
-constexpr float backgroundRed = 0.08F;
-constexpr float backgroundGreen = 0.08F;
-constexpr float backgroundBlue = 0.09F;
-constexpr float opaqueAlpha = 1.0F;
 constexpr float logPanelHeightRatio = 0.33F;
 constexpr float bottomScrollPosition = 1.0F;
 constexpr std::size_t maxDisplayedEntries = core::defaultGuiLogCapacity;
@@ -221,35 +209,6 @@ void loadAppIconPixels(std::ifstream & file, const AppIconPalette & colors, AppI
     return pixels;
 }
 
-[[nodiscard]] ImVec4 colorFromChannels(int red, int green, int blue)
-{
-    constexpr float channelMaximum = static_cast<float>(maximumColorChannel);
-    return {static_cast<float>(red) / channelMaximum,
-            static_cast<float>(green) / channelMaximum,
-            static_cast<float>(blue) / channelMaximum,
-            opaqueAlpha};
-}
-
-[[nodiscard]] ImVec4 levelColor(spdlog::level::level_enum level)
-{
-    switch (level)
-    {
-        case spdlog::level::trace :
-            return colorFromChannels(mutedGrayChannel, mutedGrayChannel, mutedGrayChannel);
-        case spdlog::level::debug :
-            return colorFromChannels(debugRedChannel, debugGreenChannel, maximumColorChannel);
-        case spdlog::level::info :
-            return colorFromChannels(mutedGrayChannel, infoGreenChannel, mutedGrayChannel);
-        case spdlog::level::warn :
-            return colorFromChannels(maximumColorChannel, warningGreenChannel, warningBlueChannel);
-        case spdlog::level::err :
-        case spdlog::level::critical :
-            return colorFromChannels(maximumColorChannel, errorGreenChannel, errorGreenChannel);
-        default :
-            return colorFromChannels(neutralGrayChannel, neutralGrayChannel, neutralGrayChannel);
-    }
-}
-
 class GlfwSession
 {
 public:
@@ -384,6 +343,8 @@ void drawMainWindow(spdlog::logger & logger, Preferences & preferences, bool & s
         if (ImGui::Button("Generate Test Logs"))
         {
             logger.log(
+                spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION}, spdlog::level::trace, "Generated a trace message");
+            logger.log(
                 spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION}, spdlog::level::debug, "Generated a debug message");
             logger.log(spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION},
                        spdlog::level::info,
@@ -411,7 +372,8 @@ void drawLogEntries(const std::vector<core::GuiLogEntry> & entries,
     const bool wasAtBottom = ImGui::GetScrollY() >= ImGui::GetScrollMaxY();
     for (const auto & entry : entries)
     {
-        ImGui::PushStyleColor(ImGuiCol_Text, levelColor(entry.level));
+        const theme::Color color = theme::logLevelColor(entry.level);
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(color.red, color.green, color.blue, color.alpha));
         ImGui::TextWrapped("%s", entry.formattedMessage.c_str());
         ImGui::PopStyleColor();
     }
@@ -505,7 +467,7 @@ void renderFrame(GLFWwindow * window)
     int displayHeight = 0;
     glfwGetFramebufferSize(window, &displayWidth, &displayHeight);
     glViewport(0, 0, displayWidth, displayHeight);
-    glClearColor(backgroundRed, backgroundGreen, backgroundBlue, opaqueAlpha);
+    glClearColor(theme::background.red, theme::background.green, theme::background.blue, theme::background.alpha);
     glClear(GL_COLOR_BUFFER_BIT);
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     glfwSwapBuffers(window);
@@ -561,6 +523,8 @@ int Application::run()
     glfwSwapInterval(1);
     const ImGuiContext guiContext;
     ImGui::StyleColorsDark();
+    ImGui::GetStyle().Colors[ImGuiCol_WindowBg] =
+        ImVec4(theme::background.red, theme::background.green, theme::background.blue, theme::background.alpha);
     const GlfwBackend glfwBackend(window.get());
     const OpenGLBackend openGLBackend;
 

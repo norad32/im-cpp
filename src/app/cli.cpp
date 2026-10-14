@@ -35,21 +35,17 @@ namespace
     return cliArguments;
 }
 
-void configureApplication(CLI::App & application,
-                          std::string & logLevel,
-                          CLI::App *& checkCommand,
-                          CLI::App *& guiCommand,
-                          std::vector<CLI::Option *> & logLevelOptions)
+void configureApplication(CLI::App & application, std::string & logLevel, CLI::App *& checkCommand, CLI::App *& guiCommand)
 {
     application.set_help_flag("-h,--help");
     application.set_version_flag("-V,--version",
                                  std::string(core::applicationName()) + " " + std::string(core::applicationVersion()));
-    logLevelOptions.push_back(application.add_option("--log-level,-l", logLevel, "Set the logging level"));
+    application.add_option("--log-level,-l", logLevel, "Set the logging level");
 
     checkCommand = application.add_subcommand("check", "Run a logging check");
     guiCommand = application.add_subcommand("gui", "Launch the graphical interface");
-    logLevelOptions.push_back(checkCommand->add_option("--log-level,-l", logLevel, "Set the logging level"));
-    logLevelOptions.push_back(guiCommand->add_option("--log-level,-l", logLevel, "Set the logging level"));
+    checkCommand->add_option("--log-level,-l", logLevel, "Set the logging level");
+    guiCommand->add_option("--log-level,-l", logLevel, "Set the logging level");
 }
 
 [[nodiscard]] int
@@ -69,12 +65,11 @@ int runCli(std::span<const std::string_view> arguments,
            const std::filesystem::path & logDirectory,
            const std::function<int(std::shared_ptr<spdlog::logger>, std::shared_ptr<core::GuiLogSink>)> & runGui)
 {
-    std::string logLevelValue{"ERROR"};
+    std::string logLevelValue{core::toString(core::defaultLogLevel())};
     CLI::App application{"", std::string(core::applicationName())};
     CLI::App * checkCommand = nullptr;
     CLI::App * guiCommand = nullptr;
-    std::vector<CLI::Option *> logLevelOptions;
-    configureApplication(application, logLevelValue, checkCommand, guiCommand, logLevelOptions);
+    configureApplication(application, logLevelValue, checkCommand, guiCommand);
 
     try
     {
@@ -93,10 +88,6 @@ int runCli(std::span<const std::string_view> arguments,
     {
         error << "Exactly one of the commands 'check' or 'gui' is required\n";
         return 2;
-    }
-    if (runGuiCommand && !std::ranges::any_of(logLevelOptions, [](const CLI::Option * option) { return option->count() > 0; }))
-    {
-        logLevelValue = "DEBUG";
     }
 
     const std::optional<core::LogLevel> parsedLevel = core::parseLogLevel(logLevelValue);

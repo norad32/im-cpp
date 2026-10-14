@@ -1,6 +1,15 @@
 #include "core/log_level.h"
 #include <catch2/catch_test_macros.hpp>
 
+TEST_CASE("defaultLogLevel_Should_MatchBuildConfiguration")
+{
+#ifdef IM_CPP_DEBUG_BUILD
+    REQUIRE(im_cpp::core::defaultLogLevel() == im_cpp::core::LogLevel::trace);
+#else
+    REQUIRE(im_cpp::core::defaultLogLevel() == im_cpp::core::LogLevel::info);
+#endif
+}
+
 TEST_CASE("parseLogLevel_Should_ParseNamedLevels")
 {
     REQUIRE(im_cpp::core::parseLogLevel("TRACE") == im_cpp::core::LogLevel::trace);

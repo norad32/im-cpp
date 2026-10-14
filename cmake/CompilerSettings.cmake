@@ -47,7 +47,7 @@ function(apply_common_compile_options target_name)
         ${target_name}
         ${scope}
         $<$<CONFIG:Debug>:IM_CPP_DEBUG_BUILD=1>
-        $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG>
+        $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE>
         $<$<CONFIG:Release>:SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_INFO>
         $<$<CONFIG:Release>:NDEBUG=1>
         $<$<CONFIG:Release>:RELEASE=1>)

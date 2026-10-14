@@ -13,7 +13,7 @@
       "type": "pickString",
       "description": "Select build target",
       "options": ["gui", "headless", "all"],
-      "default": "gui"
+      "default": "all"
     }
   ],
   "tasks": [
@@ -55,24 +55,6 @@
         }
       },
       "problemMatcher": []
-    },
-    {
-      "label": "Build Debug GUI for Launch",
-      "type": "shell",
-      "command": "cmake --preset debug-gui && cmake --build --preset debug-gui",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": ["$gcc"]
-    },
-    {
-      "label": "Build Debug Headless for Launch",
-      "type": "shell",
-      "command": "cmake --preset debug-headless && cmake --build --preset debug-headless",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": ["$gcc"]
     },
     {
       "label": "Test Debug GUI",

@@ -22,7 +22,7 @@ public:
     Logger(Logger &&) = delete;
     Logger & operator=(Logger &&) = delete;
 
-    void setup(LogLevel level = LogLevel::error, const std::filesystem::path & logDirectory = {});
+    void setup(LogLevel level = defaultLogLevel(), const std::filesystem::path & logDirectory = {});
     void shutdown() noexcept;
     void setLevel(LogLevel level) noexcept;
     [[nodiscard]] std::shared_ptr<GuiLogSink> attachGuiSink();
