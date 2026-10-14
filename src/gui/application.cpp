@@ -4,17 +4,24 @@
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstddef>
+#include <cstdlib>
+#include <utility>
+#include <filesystem>
+#include <fstream>
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 #include <memory>
+#include <sstream>
 #include <spdlog/common.h>
 #include <spdlog/logger.h>
 #include <spdlog/spdlog.h>
 #include <stdexcept>
-#include <utility>
+#include <string>
+#include <system_error>
 #include <vector>
 
 namespace im_cpp::gui
@@ -43,6 +50,176 @@ constexpr float opaqueAlpha = 1.0F;
 constexpr float logPanelHeightRatio = 0.33F;
 constexpr float bottomScrollPosition = 1.0F;
 constexpr std::size_t maxDisplayedEntries = core::defaultGuiLogCapacity;
+constexpr std::size_t appIconWidth = 32;
+constexpr std::size_t appIconHeight = 32;
+constexpr int appIconWidthAsInt = 32;
+constexpr int appIconHeightAsInt = 32;
+constexpr std::size_t appIconPaletteSize = 2;
+constexpr int appIconPaletteSizeAsInt = 2;
+constexpr std::size_t appIconRgbChannels = 3;
+constexpr std::size_t appIconAlphaChannel = appIconRgbChannels;
+constexpr std::size_t appIconChannels = appIconRgbChannels + 1;
+constexpr std::size_t appIconHexColorLength = 7;
+constexpr int appIconHexBase = 16;
+constexpr int appIconHexAlphaOffset = 10;
+constexpr int appIconAlpha = 255;
+constexpr char hexadecimalLowercaseStart = 'a';
+constexpr char hexadecimalUppercaseStart = 'A';
+constexpr char hexadecimalLastDigit = '9';
+constexpr char hexadecimalLastLowercase = 'f';
+constexpr char hexadecimalLastUppercase = 'F';
+using AppIconColor = std::array<unsigned char, appIconChannels>;
+using AppIconPalette = std::array<AppIconColor, appIconPaletteSize>;
+using AppIconPixels = std::array<unsigned char, appIconWidth * appIconHeight * appIconChannels>;
+
+[[nodiscard]] std::ifstream openAppIcon()
+{
+    if (const char * path = std::getenv("IM_CPP_ICON_PATH"); path != nullptr)
+    {
+        std::ifstream file(path);
+        if (file)
+        {
+            return file;
+        }
+    }
+    std::error_code error;
+    const std::filesystem::path executablePath = std::filesystem::read_symlink("/proc/self/exe", error);
+    if (!error)
+    {
+        std::ifstream file(executablePath.parent_path() / IM_CPP_ICON_INSTALL_RELATIVE_PATH);
+        if (file)
+        {
+            return file;
+        }
+    }
+    return std::ifstream(IM_CPP_ICON_SOURCE_PATH);
+}
+
+[[nodiscard]] unsigned char parseHexDigit(char value)
+{
+    if (value >= '0' && value <= hexadecimalLastDigit)
+    {
+        return static_cast<unsigned char>(value - '0');
+    }
+    if (value >= hexadecimalLowercaseStart && value <= hexadecimalLastLowercase)
+    {
+        return static_cast<unsigned char>(value - hexadecimalLowercaseStart + appIconHexAlphaOffset);
+    }
+    if (value >= hexadecimalUppercaseStart && value <= hexadecimalLastUppercase)
+    {
+        return static_cast<unsigned char>(value - hexadecimalUppercaseStart + appIconHexAlphaOffset);
+    }
+    throw std::runtime_error("Invalid application icon color");
+}
+
+[[nodiscard]] std::size_t appIconPaletteIndex(char symbol)
+{
+    if (symbol == '.')
+    {
+        return 0;
+    }
+    if (symbol == '+')
+    {
+        return 1;
+    }
+    throw std::runtime_error("Invalid application icon symbol");
+}
+
+[[nodiscard]] AppIconColor parseAppIconColor(const std::string & definition)
+{
+    std::istringstream colorLine(definition);
+    char symbol = 0;
+    std::string marker;
+    std::string hexColor;
+    colorLine >> symbol >> marker >> hexColor;
+    if ((symbol != '.' && symbol != '+') || marker != "c" || hexColor.size() != appIconHexColorLength ||
+        hexColor.front() != '#')
+    {
+        throw std::runtime_error("Invalid application icon color");
+    }
+
+    AppIconColor color{};
+    for (std::size_t channel = 0; channel < appIconRgbChannels; ++channel)
+    {
+        constexpr std::size_t hexPrefixLength = 1;
+        constexpr std::size_t hexDigitsPerChannel = 2;
+        const std::size_t digitOffset = hexPrefixLength + (channel * hexDigitsPerChannel);
+        color.at(channel) = static_cast<unsigned char>((parseHexDigit(hexColor.at(digitOffset)) * appIconHexBase) +
+                                                       parseHexDigit(hexColor.at(digitOffset + 1)));
+    }
+    color.at(appIconAlphaChannel) = appIconAlpha;
+    return color;
+}
+
+[[nodiscard]] AppIconPalette loadAppIconPalette(std::ifstream & file)
+{
+    AppIconPalette colors{};
+    for (std::size_t index = 0; index < appIconPaletteSize; ++index)
+    {
+        std::string colorDefinition;
+        if (!std::getline(file, colorDefinition))
+        {
+            throw std::runtime_error("Invalid application icon palette");
+        }
+        std::istringstream colorLine(colorDefinition);
+        char symbol = 0;
+        colorLine >> symbol;
+        colors.at(appIconPaletteIndex(symbol)) = parseAppIconColor(colorDefinition);
+    }
+    return colors;
+}
+
+void loadAppIconPixels(std::ifstream & file, const AppIconPalette & colors, AppIconPixels & pixels)
+{
+    std::string row;
+    for (std::size_t y = 0; y < appIconHeight; ++y)
+    {
+        if (!std::getline(file, row) || row.size() != appIconWidth)
+        {
+            throw std::runtime_error("Invalid application icon row");
+        }
+        for (std::size_t x = 0; x < appIconWidth; ++x)
+        {
+            const AppIconColor & color = colors.at(appIconPaletteIndex(row.at(x)));
+            const std::size_t pixelOffset = ((y * appIconWidth) + x) * appIconChannels;
+            for (std::size_t channel = 0; channel < appIconChannels; ++channel)
+            {
+                pixels.at(pixelOffset + channel) = color.at(channel);
+            }
+        }
+    }
+}
+
+[[nodiscard]] AppIconPixels loadAppIcon()
+{
+    std::ifstream file = openAppIcon();
+    if (!file)
+    {
+        throw std::runtime_error("Failed to open application icon asset");
+    }
+
+    std::string line;
+    int width = 0;
+    int height = 0;
+    int colorCount = 0;
+    int charactersPerPixel = 0;
+    if (!std::getline(file, line) || line != "! XPM2" || !std::getline(file, line))
+    {
+        throw std::runtime_error("Invalid application icon asset");
+    }
+    std::istringstream dimensions(line);
+    dimensions >> width >> height >> colorCount >> charactersPerPixel;
+    if (width != appIconWidthAsInt || height != appIconHeightAsInt || colorCount != appIconPaletteSizeAsInt ||
+        charactersPerPixel != 1)
+    {
+        throw std::runtime_error("Unsupported application icon asset");
+    }
+
+    AppIconPixels pixels{};
+    const AppIconPalette colors = loadAppIconPalette(file);
+    loadAppIconPixels(file, colors, pixels);
+    return pixels;
+}
 
 [[nodiscard]] ImVec4 colorFromChannels(int red, int green, int blue)
 {
@@ -367,12 +544,18 @@ int Application::run()
 {
     SPDLOG_LOGGER_DEBUG(logger_, "GUI starting");
     const GlfwSession glfwSession;
+#if GLFW_VERSION_MAJOR > 3 || (GLFW_VERSION_MAJOR == 3 && GLFW_VERSION_MINOR >= 4)
+    glfwWindowHintString(GLFW_WAYLAND_APP_ID, "im-cpp");
+#endif
     const std::unique_ptr<GLFWwindow, WindowDeleter> window{
         glfwCreateWindow(initialApplicationWindowWidth, initialApplicationWindowHeight, "im-cpp", nullptr, nullptr)};
     if (!window)
     {
         throw std::runtime_error("Failed to create GUI window");
     }
+    AppIconPixels appIconPixels = loadAppIcon();
+    const GLFWimage icon{.width = 32, .height = 32, .pixels = appIconPixels.data()};
+    glfwSetWindowIcon(window.get(), 1, &icon);
 
     glfwMakeContextCurrent(window.get());
     glfwSwapInterval(1);

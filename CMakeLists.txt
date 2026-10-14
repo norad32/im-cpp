@@ -31,9 +31,13 @@ option(ENABLE_COVERAGE "Instrument project code for Debug gcovr reports" OFF)
 option(BUILD_GUI "Build the ImGui GLFW/OpenGL desktop GUI" ON)
 option(BUILD_GUI_RUNTIME "Build the separately packaged GUI runtime executable"
        OFF)
+option(INSTALL_GUI
+       "Install GUI desktop integration with the runtime executable" OFF)
 if(BUILD_GUI_RUNTIME AND NOT BUILD_GUI)
-
     message(FATAL_ERROR "BUILD_GUI_RUNTIME requires BUILD_GUI=ON.")
+endif()
+if(INSTALL_GUI AND NOT BUILD_GUI)
+    message(FATAL_ERROR "INSTALL_GUI requires BUILD_GUI=ON.")
 endif()
 set(PACKAGE_NAME
     "${DISTRIBUTION_NAME}"
@@ -156,9 +160,6 @@ if(ENABLE_CLANG_TIDY)
         if(BUILD_GUI_RUNTIME)
             list(APPEND clang_tidy_targets ${GUI_EXECUTABLE_NAME})
         endif()
-    endif()
-    if(BUILD_TESTS)
-        list(APPEND clang_tidy_targets tests)
     endif()
     foreach(target IN LISTS clang_tidy_targets)
         set_target_properties(${target} PROPERTIES CXX_CLANG_TIDY

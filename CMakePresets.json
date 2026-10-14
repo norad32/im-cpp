@@ -17,11 +17,13 @@
       "binaryDir": "${sourceDir}/build/debug",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_INSTALL_PREFIX": "$env{HOME}/.local",
         "ENABLE_COVERAGE": "ON",
         "BUILD_TESTS": "ON",
         "BUILD_GUI": "ON",
         "ENABLE_CLANG_TIDY": "ON",
-        "BUILD_GUI_RUNTIME": "OFF"
+        "BUILD_GUI_RUNTIME": "OFF",
+        "INSTALL_GUI": "ON"
       }
     },
     {

@@ -28,6 +28,17 @@ target_link_libraries(
            OpenGL::GL
            core
            application_options)
+file(
+    RELATIVE_PATH
+    IM_CPP_ICON_INSTALL_RELATIVE_PATH
+    "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}"
+    "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/${DISTRIBUTION_NAME}/app_icon.xpm"
+)
+target_compile_definitions(
+    gui
+    PRIVATE
+        IM_CPP_ICON_INSTALL_RELATIVE_PATH=\"${IM_CPP_ICON_INSTALL_RELATIVE_PATH}\"
+        IM_CPP_ICON_SOURCE_PATH=\"${CMAKE_SOURCE_DIR}/assets/app_icon.xpm\")
 if(ENABLE_COVERAGE)
     target_link_options(
         gui

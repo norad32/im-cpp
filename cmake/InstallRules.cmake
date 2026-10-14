@@ -49,6 +49,38 @@ if(BUILD_GUI_RUNTIME)
     install(TARGETS ${GUI_EXECUTABLE_NAME}
             RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT Gui)
 endif()
+if(BUILD_GUI)
+    install(
+        FILES "${CMAKE_CURRENT_SOURCE_DIR}/assets/app_icon.xpm"
+        DESTINATION "${CMAKE_INSTALL_DATADIR}/${DISTRIBUTION_NAME}"
+        COMPONENT Runtime)
+    if(BUILD_GUI_RUNTIME OR INSTALL_GUI)
+        if(BUILD_GUI_RUNTIME)
+            set(GUI_DESKTOP_EXECUTABLE "${GUI_EXECUTABLE_NAME}")
+            set(GUI_DESKTOP_COMPONENT Gui)
+        else()
+            set(GUI_DESKTOP_EXECUTABLE "${EXECUTABLE_NAME} gui")
+            set(GUI_DESKTOP_COMPONENT Runtime)
+        endif()
+        configure_file("${CMAKE_CURRENT_SOURCE_DIR}/assets/im-cpp.desktop"
+                       "${CMAKE_CURRENT_BINARY_DIR}/im-cpp.desktop" @ONLY)
+        install(
+            FILES "${CMAKE_CURRENT_BINARY_DIR}/im-cpp.desktop"
+            DESTINATION "${CMAKE_INSTALL_DATADIR}/applications"
+            COMPONENT "${GUI_DESKTOP_COMPONENT}")
+        install(
+            FILES "${CMAKE_CURRENT_SOURCE_DIR}/assets/app_icon.svg"
+            DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps"
+            RENAME "im-cpp.svg"
+            COMPONENT "${GUI_DESKTOP_COMPONENT}")
+    endif()
+endif()
+if(BUILD_GUI_RUNTIME)
+    install(
+        FILES "${CMAKE_CURRENT_SOURCE_DIR}/assets/app_icon.xpm"
+        DESTINATION "${CMAKE_INSTALL_DATADIR}/${DISTRIBUTION_NAME}"
+        COMPONENT Gui)
+endif()
 
 install(
     DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/src/"
