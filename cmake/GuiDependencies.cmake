@@ -1,7 +1,8 @@
 include(FetchContent)
 application_pin_fetchcontent_dependency(
     imgui https://github.com/ocornut/imgui.git
-    f5befd2d29e66809cd1110a152e375a7f1981f06) # Dear ImGui v1.91.9b
+    4806a1924ff6181180bf5e4b8b79ab4394118875
+)# Dear ImGui v1.91.9b docking branch
 FetchContent_MakeAvailable(imgui)
 FetchContent_GetProperties(imgui SOURCE_DIR fetched_imgui_source_dir)
 set(IMGUI_SOURCE_DIR "${fetched_imgui_source_dir}")

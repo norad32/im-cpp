@@ -365,8 +365,7 @@ void drawFrame(GLFWwindow * window,
     }
     const float bottomPanelHeight = drawLogPanel(logSink, preferences, entries, followScroll);
     const ImGuiID dockSpaceId = drawDockSpace(bottomPanelHeight);
-    ImGui::SetNextWindowDockID(dockSpaceId, ImGuiCond_FirstUseEver);
-    drawDemoPanel(logger, preferences, shouldClose, demoPanelState);
+    drawDemoPanel(logger, preferences, shouldClose, dockSpaceId, bottomPanelHeight, demoPanelState);
     renderFrame(window);
 }
 
